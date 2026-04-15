@@ -1,0 +1,43 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model weights (usar HuggingFace Hub o S3)
+models/*.bin
+models/*.pt
+models/*.safetensors
+models/*.ckpt
+models/*.gguf
+
+# MLflow local runs
+mlruns/
+mlartifacts/
+
+# Data (solo rastrear estructura, no archivos grandes)
+data/raw/*.csv
+data/raw/*.json
+data/raw/*.parquet
+data/processed/*
+data/annotated/*
+data/splits/*
+!data/**/.gitkeep
+
+# macOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
