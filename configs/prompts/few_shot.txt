@@ -1,0 +1,61 @@
+Eres un clasificador de fragmentos de artículos científicos biomédicos según IMRaD.
+
+Responde con UNA SOLA PALABRA de: Introducción, Metodología, Resultados, Discusión.
+No expliques, no uses puntuación, no añadas texto adicional.
+
+Reglas de prioridad:
+1. Si menciona LIMITACIONES o "más estudios necesarios", clasifica como Discusión.
+2. Si INTERPRETA o SUGIERE (aunque haya cifras), clasifica como Discusión.
+3. Si reporta cifras SIN interpretación, clasifica como Resultados.
+4. Si describe PROCEDIMIENTO, clasifica como Metodología.
+5. Si presenta OBJETIVO o contexto de enfermedad, clasifica como Introducción.
+
+Ejemplos:
+
+Fragmento: "La hiperfiltración renal y la albuminuria tienen un efecto perjudicial sobre la función renal."
+Categoría: Introducción
+
+Fragmento: "Evaluar el impacto de la vitamina D en la progresión de la enfermedad renal en pacientes diabéticos."
+Categoría: Introducción
+
+Fragmento: "Existen limitaciones para las personas mayores con discapacidad visual que deseen participar en programas de ejercicios."
+Categoría: Introducción
+
+Fragmento: "Los sujetos fueron asignados aleatoriamente para recibir suplemento antioxidante o placebo."
+Categoría: Metodología
+
+Fragmento: "Un ensayo aleatorizado controlado realizado en la Unidad Universitaria, Hospital Docente Mahamodara, Galle."
+Categoría: Metodología
+
+Fragmento: "Pacientes de 18-75 años con hiperhidrosis axilar primaria bilateral suficiente para interferir con la vida diaria."
+Categoría: Metodología
+
+Fragmento: "La evaluación subjetiva fue mediante una escala visual analógica."
+Categoría: Metodología
+
+Fragmento: "Doce voluntarios sanos completaron el estudio."
+Categoría: Resultados
+
+Fragmento: "Se observó un aumento estadísticamente significativo de los valores de VMP durante las altas presiones intraabdominales (p < 0,001)."
+Categoría: Resultados
+
+Fragmento: "La hemoglobina glicosilada se redujo 1.2% (IC 95%: 0.8-1.6; p<0.001) versus placebo."
+Categoría: Resultados
+
+Fragmento: "Las respuestas hemodinámicas sistémicas al CPT no fueron influenciadas por estrógenos o placebo."
+Categoría: Resultados
+
+Fragmento: "Nuestros hallazgos sugieren efectos modestos de los probióticos en la maduración de células T."
+Categoría: Discusión
+
+Fragmento: "El entrenamiento concurrente es beneficioso para las mujeres posmenopáusicas con FM, pero se necesitan estudios más extensos."
+Categoría: Discusión
+
+Fragmento: "Este estudio no demuestra ninguna ventaja terapéutica del uso de pentoxifilina en la FIV para la infertilidad del factor masculino."
+Categoría: Discusión
+
+Fragmento: "Es difícil recomendar el manitol intravenoso como terapia concomitante para la malaria cerebral infantil."
+Categoría: Discusión
+
+Fragmento: "{text}"
+Categoría:

@@ -1,0 +1,24 @@
+{
+  "citation": "",
+  "description": "",
+  "features": {
+    "id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "texto": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "etiqueta": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "nombre_etiqueta": {
+      "dtype": "string",
+      "_type": "Value"
+    }
+  },
+  "homepage": "",
+  "license": ""
+}

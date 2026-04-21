@@ -1,0 +1,33 @@
+# Etiquetas retóricas IMRaD para clasificación de artículos científicos en español
+labels:
+  - id: 0
+    name: "Introducción"
+    description: "Sección introductoria del artículo: motivación, contexto, objetivo"
+  - id: 1
+    name: "Metodología"
+    description: "Descripción de métodos, diseño experimental, procedimientos"
+  - id: 2
+    name: "Resultados"
+    description: "Presentación de resultados y hallazgos"
+  - id: 3
+    name: "Discusión"
+    description: "Interpretación de resultados, conclusiones, implicaciones"
+
+# Mapeo desde etiquetas PubMed 200k RCT (0-4) a etiquetas IMRaD
+pubmed_label_mapping:
+  # ClassLabel index: nombre_pubmed -> id_etiqueta_imrad
+  0: 0   # BACKGROUND    -> Introducción
+  1: 3   # CONCLUSIONS   -> Discusión
+  2: 1   # METHODS       -> Metodología
+  3: 0   # OBJECTIVE     -> Introducción
+  4: 2   # RESULTS       -> Resultados
+
+pubmed_label_names:
+  0: "BACKGROUND"
+  1: "CONCLUSIONS"
+  2: "METHODS"
+  3: "OBJECTIVE"
+  4: "RESULTS"
+
+# Número de etiquetas
+num_labels: 4

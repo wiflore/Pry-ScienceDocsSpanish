@@ -1,0 +1,65 @@
+{
+  "descripcion": "Muestra de 10 ejemplos para anotación manual (simulada)",
+  "ejemplos": [
+    {
+      "id": "mock_2_029",
+      "texto": "Se incluyeron 143 pacientes en el análisis final. La edad media fue de 58.3 ± 12.1 años y el 54% eran mujeres.",
+      "etiqueta": 2,
+      "nombre_etiqueta": "Resultados"
+    },
+    {
+      "id": "mock_3_031",
+      "texto": "Una limitación importante de este trabajo es el tamaño muestral reducido, que puede afectar la potencia estadística de las comparaciones.",
+      "etiqueta": 3,
+      "nombre_etiqueta": "Discusión"
+    },
+    {
+      "id": "mock_2_036",
+      "texto": "La sensibilidad del método propuesto fue del 87.4% y la especificidad del 91.2%, con un área bajo la curva ROC de 0.93.",
+      "etiqueta": 2,
+      "nombre_etiqueta": "Resultados"
+    },
+    {
+      "id": "mock_1_044",
+      "texto": "El diseño del estudio siguió las guías CONSORT. Los participantes fueron asignados aleatoriamente a dos grupos: tratamiento y control.",
+      "etiqueta": 1,
+      "nombre_etiqueta": "Metodología"
+    },
+    {
+      "id": "mock_2_005",
+      "texto": "La sensibilidad del método propuesto fue del 87.4% y la especificidad del 91.2%, con un área bajo la curva ROC de 0.93.",
+      "etiqueta": 2,
+      "nombre_etiqueta": "Resultados"
+    },
+    {
+      "id": "mock_2_010",
+      "texto": "Los niveles séricos de la resistencia a la insulina fueron significativamente mayores en el grupo de casos que en los controles (p = 0.003, IC 95%: 1.2–3.4).",
+      "etiqueta": 2,
+      "nombre_etiqueta": "Resultados"
+    },
+    {
+      "id": "mock_3_013",
+      "texto": "Los hallazgos de este estudio confirman que la resistencia a la insulina está asociado de manera independiente con el pronóstico adverso a corto plazo.",
+      "etiqueta": 3,
+      "nombre_etiqueta": "Discusión"
+    },
+    {
+      "id": "mock_3_020",
+      "texto": "Los hallazgos de este estudio confirman que el daño miocárdico está asociado de manera independiente con el pronóstico adverso a corto plazo.",
+      "etiqueta": 3,
+      "nombre_etiqueta": "Discusión"
+    },
+    {
+      "id": "mock_1_043",
+      "texto": "El análisis estadístico se llevó a cabo mediante regresión logística multivariante. Se consideró un nivel de significancia de p < 0.05.",
+      "etiqueta": 1,
+      "nombre_etiqueta": "Metodología"
+    },
+    {
+      "id": "mock_3_034",
+      "texto": "En conclusión, la detección temprana de el daño miocárdico mediante biomarcadores séricos podría mejorar la estratificación del riesgo clínico.",
+      "etiqueta": 3,
+      "nombre_etiqueta": "Discusión"
+    }
+  ]
+}

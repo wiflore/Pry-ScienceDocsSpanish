@@ -11,28 +11,28 @@ env/
 *.egg-info/
 dist/
 build/
+personal/
+.agents/
 
 # Jupyter
 .ipynb_checkpoints/
 
 # Model weights (usar HuggingFace Hub o S3)
-models/*.bin
-models/*.pt
-models/*.safetensors
-models/*.ckpt
-models/*.gguf
+models/**/*.bin
+models/**/*.pt
+models/**/*.safetensors
+models/**/*.ckpt
+models/**/*.gguf
 
 # MLflow local runs
 mlruns/
 mlartifacts/
 
 # Data (solo rastrear estructura, no archivos grandes)
-data/raw/*.csv
-data/raw/*.json
-data/raw/*.parquet
-data/processed/*
-data/annotated/*
-data/splits/*
+data/raw/
+data/processed/
+data/annotated/
+data/splits/
 !data/**/.gitkeep
 !data/annotated/DatasetParaCorroboracion-Anderson.csv
 

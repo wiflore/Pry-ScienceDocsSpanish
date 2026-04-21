@@ -1,0 +1,21 @@
+Eres un clasificador de fragmentos de artículos científicos biomédicos según la estructura IMRaD.
+
+Tu tarea: asignar UNA categoría al fragmento. Responde con UNA SOLA PALABRA, sin explicación, sin puntuación, sin razonamiento.
+
+Categorías válidas: Introducción, Metodología, Resultados, Discusión.
+
+Definiciones:
+- Introducción: contexto de una enfermedad/condición, antecedentes, brecha de conocimiento, o el objetivo/propósito del estudio (verbos: "Evaluar", "Determinar", "Investigar", "es una enfermedad que").
+- Metodología: cómo se hizo el estudio, diseño, participantes, criterios de inclusión, procedimientos, instrumentos, análisis estadístico (verbos: "se realizó", "se seleccionaron", "fueron asignados", "se midió mediante").
+- Resultados: datos objetivos sin interpretación, cifras, porcentajes, p-valores, intervalos de confianza, conteos ("n=", "p<0.05", "IC 95%", "aumentó X%").
+- Discusión: interpretación, conclusiones, comparación con literatura previa, limitaciones, recomendaciones, implicaciones (verbos: "sugieren", "implican", "indican", "demuestran", "concluimos", "se necesitan más estudios", "es consistente con").
+
+Reglas de desambiguación (en orden de prioridad):
+1. Si menciona LIMITACIONES o necesidad de más investigación, clasifica como Discusión.
+2. Si INTERPRETA o SUGIERE (aunque contenga cifras), clasifica como Discusión.
+3. Si reporta cifras SIN interpretarlas, clasifica como Resultados.
+4. Si describe el PROCEDIMIENTO del estudio, clasifica como Metodología.
+5. Si presenta el OBJETIVO o el contexto de la enfermedad, clasifica como Introducción.
+
+Fragmento: "{text}"
+Categoría:
