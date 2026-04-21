@@ -46,13 +46,21 @@ Entre los modelos abiertos (Qwen), se observan tres patrones contraintuitivos:
 
 ### Fine-tuning supervisado (SciBETO)
 **Ventajas:** máxima precisión, latencia mínima, comportamiento determinístico, no requiere API externa.  
-**Limitaciones:** requiere datos etiquetados de calidad, el entrenamiento tarda ~30 min en MPS y el modelo no es adaptable ad-hoc sin re-entrenar.  
+**Limitaciones:** requiere datos etiquetados de calidad, el entrenamiento tarda ~30 min en MPS y el modelo no es adaptable sin reentrenamiento.  
 **Trade-off:** es la opción óptima para producción si se cuenta con suficientes datos anotados; su rendimiento depende directamente de la calidad y representatividad del corpus de entrenamiento.
 
 ### Prompting (zero-shot / few-shot)
 **Ventajas:** no requiere datos de entrenamiento, fácil de adaptar cambiando el prompt, útil para prototipado rápido y dominios con escasos datos etiquetados.  
 **Limitaciones:** latencia alta (0.4–0.9 s/muestra), sensibilidad al diseño del prompt, variabilidad entre corridas con temperatura > 0.  
 **Trade-off:** few-shot no siempre supera a zero-shot; el beneficio depende del tamaño del modelo y la calidad de los ejemplos seleccionados. Para esta tarea, el zero-shot con Qwen2.5:3b resulta sorprendentemente competitivo y sin costo adicional de diseño de ejemplos.
+
+### Justificación del diseño de prompts
+
+El diseño de los prompts responde a una limitación observada en las pruebas preliminares: los modelos de 3–7B clasifican mejor con señales léxicas concretas que con definiciones abstractas. Por eso, se usaron marcadores visibles para cada sección objetivo y se compararon dos variantes: zero-shot, con definiciones y reglas de desambiguación, y few-shot, igual pero con cuatro ejemplos resueltos. 
+
+Los resultados muestran un patrón claro: en los modelos grandes, few-shot mejora el rendimiento, mientras que en los pequeños lo empeora, por lo que la elección entre ambas estrategias debe depender del modelo.  Además, las reglas para casos límite trasladan al modelo el criterio de un anotador experto y alinean la clasificación con el gold standard. 
+
+La temperatura se fijó en 0.0 para asegurar reproducibilidad y la salida se restringió a una sola palabra para facilitar el parseo.
 
 ### Limitaciones del corpus mock
 El conjunto de datos utilizado presenta tres limitaciones relevantes:
@@ -66,10 +74,10 @@ El conjunto de datos utilizado presenta tres limitaciones relevantes:
 
 El pipeline de datos real avanzó en las siguientes etapas durante las semanas 1–2:
 
-- Recolección y normalización unicode de textos fuente en español
-- Mapeo de etiquetas PubMed a IMRaD y limpieza de texto
-- Construcción de splits estratificados sin solapamiento a nivel de documento
-- Diseño del esquema de anotación manual y selección de muestras
+1. Recolección y normalización unicode de textos fuente en español
+2. Mapeo de etiquetas PubMed a IMRaD y limpieza de texto
+3. Construcción de splits estratificados sin solapamiento a nivel de documento
+4. Diseño del esquema de anotación manual y selección de muestras
 
 Quedan pendientes para la siguiente entrega: el enmascarado de encabezados (versión 2), la anotación manual del ≥10% de ejemplos por etiqueta, el cálculo de acuerdo interanotador, y la escala a ≥2,000 ejemplos por clase.
 
@@ -116,7 +124,7 @@ En consecuencia, el alcance de esta entrega se concentró en construir una compa
 
 ## 8. Trabajo pendiente
 
-- **Integración datos reales:** reemplazar el corpus mock por el corpus anotado, re-entrenar SciBETO y re-evaluar todos los modelos.
-- **Tarea 2:** entrenar encoder binario de contribución científica y evaluar con las mismas familias de modelo.
-- **Análisis de error cualitativo:** estudio de los errores en _Discusión_, en particular la confusión con _Introducción_ y _Resultados_ que aparece consistentemente en todos los modelos.
-- **Re-evaluación con corpus humano-validado:** comprobar si la brecha Gemini/SciBETO/Qwen se mantiene cuando las etiquetas dejan de provenir del mapeo automático de PubMed a IMRaD.
+1. **Integración datos reales:** reemplazar el corpus mock por el corpus anotado, re-entrenar SciBETO y re-evaluar todos los modelos.
+2. **Tarea 2:** entrenar encoder binario de contribución científica y evaluar con las mismas familias de modelo.
+3. **Análisis de error cualitativo:** estudio de los errores en _Discusión_, en particular la confusión con _Introducción_ y _Resultados_ que aparece consistentemente en todos los modelos.
+4. **Re-evaluación con corpus humano-validado:** comprobar si la brecha Gemini/SciBETO/Qwen se mantiene cuando las etiquetas dejan de provenir del mapeo automático de PubMed a IMRaD.
