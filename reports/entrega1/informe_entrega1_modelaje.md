@@ -102,7 +102,19 @@ Ejemplos representativos de las instrucciones utilizadas:
 
 ---
 
-## 7. Trabajo pendiente
+## 7. Cambios frente al planteamiento inicial
+
+La evaluación final no replicó exactamente la lista de modelos planteada al inicio del proyecto. En la formulación preliminar se contemplaba comparar un conjunto más amplio de modelos abiertos y cerrados; sin embargo, durante la implementación se ajustó el alcance para priorizar modelos que fueran viables de ejecutar, comparar y analizar con los recursos disponibles en esta etapa.
+
+En particular, se mantuvo **SciBETO-large** como referencia supervisada y se evaluaron **Qwen2.5:3b** y **Qwen2.5:7b** como línea base local por su disponibilidad en Ollama y su costo de experimentación prácticamente nulo. En paralelo, se incorporaron **Gemini 2.5 Flash** y **Gemini 3 Flash Preview**, aunque este último no hacía parte del planteamiento inicial. La inclusión de Gemini 3 respondió a un cambio en la oferta de modelos disponible durante el desarrollo y a la conveniencia de contrastar un modelo más reciente bajo el mismo protocolo de evaluación.
+
+También se decidió no hacer una exploración exhaustiva de todas las combinaciones posibles de modelos, tamaños y prompts. Esa decisión fue deliberada, no una omisión accidental. Con el corpus mock actual, los resultados ya permiten distinguir tres comportamientos claros: un modelo fine-tuned eficiente y competitivo, una familia local abierta con desempeño intermedio, y una familia de API con mejor accuracy pero mayor latencia y dependencia externa. Una vez esa señal experimental quedó establecida, seguir agregando modelos similares ofrecía un retorno decreciente frente al costo en tiempo de cómputo, uso de API y esfuerzo de análisis.
+
+En consecuencia, el alcance de esta entrega se concentró en construir una comparación técnicamente suficiente para tomar decisiones de ingeniería, más que en agotar todo el espacio posible de modelos. La evaluación podrá ampliarse en entregas posteriores si el corpus real o nuevas restricciones del proyecto hacen necesario revisar esa decisión.
+
+---
+
+## 8. Trabajo pendiente
 
 - **Integración datos reales:** reemplazar el corpus mock por el corpus anotado, re-entrenar SciBETO y re-evaluar todos los modelos.
 - **Tarea 2:** entrenar encoder binario de contribución científica y evaluar con las mismas familias de modelo.
