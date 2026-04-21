@@ -35,6 +35,7 @@ data/annotated/
 data/splits/
 !data/**/.gitkeep
 !data/annotated/DatasetParaCorroboracion-Anderson.csv
+!data/annotated/DatasetParaAnotacionManual-Anderson.csv
 
 # macOS
 .DS_Store
