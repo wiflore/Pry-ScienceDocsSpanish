@@ -1,0 +1,66 @@
+{
+  "total_registros": 20000,
+  "total_train": 18395,
+  "total_eval": 1600,
+  "total_descartados": 5,
+  "docs_anotacion": 936,
+  "chunk_ids_eval": 1600,
+  "detalle": [
+    {
+      "archivo": "dataset_back.jsonl",
+      "total": 2500,
+      "train": 2299,
+      "eval": 200,
+      "descartados": 1
+    },
+    {
+      "archivo": "dataset_conc.jsonl",
+      "total": 2500,
+      "train": 2300,
+      "eval": 200,
+      "descartados": 0
+    },
+    {
+      "archivo": "dataset_contr.jsonl",
+      "total": 2500,
+      "train": 2300,
+      "eval": 200,
+      "descartados": 0
+    },
+    {
+      "archivo": "dataset_disc.jsonl",
+      "total": 2500,
+      "train": 2300,
+      "eval": 200,
+      "descartados": 0
+    },
+    {
+      "archivo": "dataset_intro.jsonl",
+      "total": 2500,
+      "train": 2296,
+      "eval": 200,
+      "descartados": 4
+    },
+    {
+      "archivo": "dataset_lim.jsonl",
+      "total": 2500,
+      "train": 2300,
+      "eval": 200,
+      "descartados": 0
+    },
+    {
+      "archivo": "dataset_meth.jsonl",
+      "total": 2500,
+      "train": 2300,
+      "eval": 200,
+      "descartados": 0
+    },
+    {
+      "archivo": "dataset_res.jsonl",
+      "total": 2500,
+      "train": 2300,
+      "eval": 200,
+      "descartados": 0
+    }
+  ]
+}

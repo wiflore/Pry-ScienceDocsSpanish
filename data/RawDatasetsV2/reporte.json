@@ -1,0 +1,76 @@
+{
+  "total_chunks": 562,
+  "total_documentos": 195,
+  "docs_aceptados": 42,
+  "docs_descartados_filtro": 5,
+  "docs_descartados_estructura": 153,
+  "duplicados_removidos": 0,
+  "chunks_por_etiqueta": {
+    "sin_asignacion": 234,
+    "INTRO": 152,
+    "CONC": 88,
+    "BACK": 32,
+    "DISC": 24,
+    "RES": 19,
+    "METH": 11,
+    "LIM": 2
+  },
+  "chunks_por_confianza": {
+    "ninguna": 234,
+    "alta": 212,
+    "baja": 85,
+    "media": 31
+  },
+  "chunks_por_fuente": {
+    "sin_asignacion": 234,
+    "encabezado": 178,
+    "posicion_extrema": 85,
+    "encabezado+patron": 31,
+    "patron": 23,
+    "patron+posicion": 9,
+    "rescate_densidad": 1,
+    "rescate_ventana": 1
+  },
+  "cobertura_meta": {
+    "INTRO": {
+      "total_chunks": 152,
+      "meta_2000": false,
+      "porcentaje_meta": 7.6
+    },
+    "BACK": {
+      "total_chunks": 32,
+      "meta_2000": false,
+      "porcentaje_meta": 1.6
+    },
+    "METH": {
+      "total_chunks": 11,
+      "meta_2000": false,
+      "porcentaje_meta": 0.5
+    },
+    "RES": {
+      "total_chunks": 19,
+      "meta_2000": false,
+      "porcentaje_meta": 0.9
+    },
+    "DISC": {
+      "total_chunks": 24,
+      "meta_2000": false,
+      "porcentaje_meta": 1.2
+    },
+    "CONTR": {
+      "total_chunks": 0,
+      "meta_2000": false,
+      "porcentaje_meta": 0.0
+    },
+    "LIM": {
+      "total_chunks": 2,
+      "meta_2000": false,
+      "porcentaje_meta": 0.1
+    },
+    "CONC": {
+      "total_chunks": 88,
+      "meta_2000": false,
+      "porcentaje_meta": 4.4
+    }
+  }
+}
