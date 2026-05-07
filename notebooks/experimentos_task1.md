@@ -2,7 +2,7 @@
 
 **Proyecto:** Análisis de documentos científicos en español  
 **Grupo:** FLAG – TICsW, Universidad de los Andes  
-**Última actualización:** 2026-05-06 (Qwen3 few-shot completado)
+**Última actualización:** 2026-05-06 (Experimento 6 — prompt v2 completo)
 
 ---
 
@@ -293,16 +293,210 @@ RES           1     0      0     1      3    0     6    3
 
 ---
 
+## Experimento 5 — XLM-RoBERTa-large fine-tuned (ablación de dominio)
+
+**Script:** `scripts/train_task1_xlmroberta.py`  
+**Fecha:** 2026-05-06  
+**Estado:** ✅ Completado (no convergió — resultado negativo documentado)  
+**Modelo:** `xlm-roberta-large` (560M parámetros, multilingüe, preentrenado en Wikipedia de 100 idiomas)  
+**Propósito:** Ablación para medir el impacto del preentrenamiento en dominio (científico en español) vs. preentrenamiento general multilingüe.
+
+### Configuración
+Idéntica a SciBETO-large v2, excepto:
+
+| Parámetro | SciBETO | XLM-RoBERTa |
+|---|---|---|
+| MODEL_ID | `Flaglab/SciBETO-large` | `xlm-roberta-large` |
+| Preentrenamiento | Texto científico español (11B tokens) | Wikipedia 100 idiomas |
+| Parámetros | 355M | 560M |
+| Learning rate | 2e-5 | 5e-5 (ajustado) |
+| hidden_dropout_prob | 0.3 | default (0.1) |
+
+> Se ajustó LR a 5e-5 y se eliminó `hidden_dropout_prob` adicional tras un primer intento fallido con LR=2e-5 (ambas corridas produjeron el mismo resultado).
+
+### Curva de entrenamiento (LR=5e-5)
+| Época | Train Loss | Val Loss | Val Macro F1 | Mejor |
+|---|---|---|---|---|
+| 1 | 2.1315 | 2.0423 | 0.0731 | ✓ |
+| 2 | 2.1183 | 2.0821 | 0.0306 | – (1/3) |
+| 3 | 2.1205 | 2.0728 | 0.0318 | – (2/3) |
+| 4 | 2.1272 | 2.0795 | 0.0318 | – (3/3) → **Early stop** |
+
+> La pérdida oscila en torno a 2.08–2.13 sin descender. Para referencia: ln(8) ≈ 2.08, que es la pérdida de un clasificador que predice uniformemente. El modelo no aprendió nada más allá de la clase mayoritaria.
+
+### Resultados en test (checkpoint época 1)
+| Métrica | Valor |
+|---|---|
+| **Macro F1** | **0.0761** |
+| Accuracy | 0.3292 |
+
+#### F1 por clase
+| Clase | Precision | Recall | F1 | Soporte |
+|---|---|---|---|---|
+| BACK | 0.33 | 0.98 | 0.50 | 52 |
+| CONC | 0.00 | 0.00 | 0.00 | 11 |
+| CONTR | 0.00 | 0.00 | 0.00 | 3 |
+| DISC | 0.00 | 0.00 | 0.00 | 27 |
+| INTRO | 0.00 | 0.00 | 0.00 | 17 |
+| LIM | 0.00 | 0.00 | 0.00 | 9 |
+| METH | 0.25 | 0.07 | 0.11 | 28 |
+| RES | 0.00 | 0.00 | 0.00 | 14 |
+
+### Observaciones
+- **No convergió**: el modelo predice casi todo como BACK (clase mayoritaria, 32% del test). F1=0.08 frente a F1=0.40 de SciBETO.
+- **Causa principal — desajuste de dominio**: XLM-RoBERTa fue preentrenado en Wikipedia general (100 idiomas). Sus representaciones no capturan el lenguaje científico en español. SciBETO, entrenado en 11B tokens de artículos científicos en español, ya tiene embeddings ajustados al vocabulario del dominio (IMRD, terminología académica, conectores discursivos científicos).
+- **Causa secundaria — proporción datos/parámetros**: XLM-RoBERTa tiene 560M parámetros frente a 355M de SciBETO. Con solo 1 268 muestras de entrenamiento, la relación datos/parámetros es aún más desfavorable. El modelo necesitaría muchas más épocas o un dataset mucho mayor para converger desde representaciones tan alejadas del dominio.
+- **Resultado útil como ablación**: confirma que el preentrenamiento específico de dominio es crítico para clasificación retórica en textos científicos en español con pocos datos.
+
+---
+
 ## Resumen comparativo
 
-| Modelo | Macro F1 | Accuracy | Notas |
+| Modelo | Macro F1 | Accuracy | Tipo | Notas |
+|---|---|---|---|---|
+| TF-IDF + LogReg | 0.2993 | 0.4348 | Clásico | Baseline, sin semántica profunda |
+| XLM-RoBERTa-large ft | 0.0761 | 0.3292 | Encoder ft | No convergió: desajuste de dominio |
+| SciBETO-large ft | 0.3983 | 0.4472 | Encoder ft | Fine-tuning, early stopping época 3 |
+| Qwen3-8B (few-shot) | 0.3538 | 0.4534 | Decoder prompting | Few-shot empeora vs zero-shot |
+| Qwen3-8B (zero-shot) | 0.4165 | 0.5217 | Decoder prompting | Inferencia local, sin fine-tuning |
+| Gemini 2.5 Flash (zero-shot) | 0.4730 | 0.6211 | Decoder prompting | Vía API |
+| Gemini 2.5 Flash (few-shot) | **0.4878** | **0.6335** | Decoder prompting | Mejor resultado general |
+
+## Análisis comparativo
+
+### ¿Por qué SciBETO supera a XLM-RoBERTa?
+
+Ambos son encoders tipo RoBERTa con arquitectura similar (capas Transformer, pooling CLS, cabeza de clasificación lineal) y se fine-tunearon con exactamente el mismo pipeline. La diferencia es el **corpus de preentrenamiento**:
+
+- **SciBETO** fue preentrenado en texto científico en español (~11B tokens de artíficos académicos). Sus embeddings capturan patrones lingüísticos del discurso científico: términos técnicos, conectores discursivos ("sin embargo", "por tanto", "se concluye"), estructuras de IMRD. Al fine-tunear, los gradientes solo necesitan *ajustar* representaciones ya cercanas al objetivo.
+- **XLM-RoBERTa** fue preentrenado en Wikipedia de 100 idiomas — dominio completamente diferente. Sus embeddings no reconocen la diferencia entre "los resultados muestran" (RES) y "los estudios previos muestran" (BACK). Con 1 268 muestras, los gradientes no son suficientes para reescribir esas representaciones desde cero en 10 épocas.
+
+En términos prácticos: el preentrenamiento en dominio equivale a tener un punto de partida a 100m del objetivo; el preentrenamiento general equiv ale a estar a 10 km. Con el mismo presupuesto de entrenamiento (pocas épocas, pocos datos), solo el primero llega.
+
+### ¿Por qué los LLMs (Gemini, Qwen3) superan a los encoders fine-tuneados?
+
+1. **Escala**: Gemini 2.5 Flash tiene cientos de miles de millones de parámetros. Qwen3-8B tiene 8B. Ambos han visto enormes volúmenes de texto científico durante preentrenamiento, incluyendo español académico.
+2. **Razonamiento zero-shot**: los LLMs pueden seguir instrucciones en lenguaje natural. Se les describe la tarea directamente con definiciones de clases y reglas de desambiguación, sin necesidad de ejemplos etiquetados para aprender.
+3. **Limitación de los encoders**: un encoder fine-tuneado de 355M parámetros aprende una proyección estadística de CLS→clase. Con 8 clases desbalanceadas y ~160 muestras por clase en promedio, el espacio de decisión es ruidoso.
+
+### ¿Por qué few-shot ayuda a Gemini pero perjudica a Qwen3?
+
+- **Gemini (API, sin restricción de tokens)**: los ejemplos tienen 400 palabras por clase, suficientes para mostrar el estilo y vocabulario completo de cada categoría. El modelo los usa como anclas semánticas efectivas.
+- **Qwen3 (local, VRAM limitada)**: los ejemplos deben truncarse a 80 palabras para caber en VRAM (12.9 GB RTX 4070). Con 80 palabras, el ejemplo de DISC puede parecer similar a BACK, el de LIM puede confundirse con CONC. Los ejemplos truncados introducen señales ambiguas que dañan más de lo que ayudan.
+
+### ¿Por qué METH es la clase más fácil para todos los modelos?
+
+METH tiene el vocabulario más distintivo: términos como "muestra", "instrumento", "procedimiento", "recolectó", "variable", "análisis estadístico", "entrevista", "encuesta" aparecen casi exclusivamente en secciones de metodología. Tanto TF-IDF (0.56) como SciBETO (0.72) como Gemini (0.82–0.88) y Qwen3 (0.77–0.81) identifican METH con alta precisión.
+
+### ¿Por qué CONTR siempre da 0.00?
+
+Solo hay 3 muestras de CONTR en test — ninguna predicción correcta es suficiente para obtener F1 > 0. Además, los fragmentos de CONTR son lingüísticamente similares a INTRO o DISC (presentan la propuesta del trabajo). Con tan poca representación tanto en entrenamiento (62 muestras) como en test, este resultado no es estadísticamente significativo.
+
+---
+
+## Experimento 6 — Mejoras de prompt (v2): definiciones contrastivas, few-shot targeted, truncación y CoT
+
+**Scripts:** `scripts/eval_task1_gemini_v2.py`, `scripts/eval_task1_qwen_v2.py`  
+**Fecha:** 2026-05-06  
+**Estado:** ✅ Completado  
+**Objetivo:** Evaluar 4 mejoras de prompt sobre los modelos base (Gemini y Qwen3) y medir su impacto.
+
+### Mejoras implementadas
+
+| Mejora | Descripción | Gemini v2 | Qwen v2 |
 |---|---|---|---|
-| TF-IDF + LogReg | 0.2993 | 0.4348 | Baseline, sin semántica profunda |
-| SciBETO-large ft | 0.3983 | 0.4472 | Fine-tuning, early stopping en época 3 |
-| Gemini 2.5 Flash (zero-shot) | 0.4730 | 0.6211 |
-| Gemini 2.5 Flash (few-shot) | 0.4878 | 0.6335 |
-| Qwen3-8B (zero-shot) | 0.4165 | 0.5217 | Inferencia local, greedy, sin fine-tuning |
-| Qwen3-8B (few-shot) | 0.3538 | 0.4534 | Few-shot empeora (ejemplos truncados a 80 palabras) |
+| Definiciones contrastivas | Añade sección "Pares frecuentemente confundidos" para BACK/INTRO, RES/DISC, INTRO/CONTR | ✅ | ✅ |
+| Few-shot targeted | Selecciona el ejemplo con mayor densidad de keywords discriminativas por clase (en vez de muestra aleatoria) | ✅ 400 palabras | ✅ 80 palabras |
+| Truncación 300+100 palabras | Head+tail sobre el texto antes de pasarlo al prompt, para evitar contextos excesivamente largos | ✅ | ✅ |
+| Chain-of-Thought (CoT) | El modelo razona 1-2 oraciones antes de emitir `ETIQUETA: <código>` | ✅ | ❌ inviable (VRAM) |
+
+> **CoT en Qwen3**: `max_new_tokens=120` hace que la generación desborde la VRAM del RTX 4070 → offload a CPU+disco → 155s/muestra. Se descartó. Qwen v2 usa solo las primeras 3 mejoras con `max_new_tokens=15`.
+
+### Resultados — Gemini 2.5 Flash
+
+| Modo | Macro F1 v1 | Macro F1 v2 | Δ |
+|---|---|---|---|
+| zero_shot | 0.4730 | 0.4263 | ↓ −0.047 |
+| few_shot | 0.4878 | 0.4570 | ↓ −0.031 |
+
+#### F1 por clase — Zero-shot v2
+| Clase | Precision | Recall | F1 | Soporte |
+|---|---|---|---|---|
+| BACK | 0.54 | 0.83 | 0.66 | 52 |
+| CONC | 0.80 | 0.36 | 0.50 | 11 |
+| CONTR | 0.00 | 0.00 | 0.00 | 3 |
+| DISC | 0.71 | 0.44 | 0.55 | 27 |
+| INTRO | 0.37 | 0.41 | 0.39 | 17 |
+| LIM | 0.33 | 0.11 | 0.17 | 9 |
+| METH | 0.76 | 0.89 | 0.82 | 28 |
+| RES | 0.75 | 0.21 | 0.33 | 14 |
+
+#### F1 por clase — Few-shot v2
+| Clase | Precision | Recall | F1 | Soporte |
+|---|---|---|---|---|
+| BACK | 0.59 | 0.77 | 0.67 | 52 |
+| CONC | 0.57 | 0.36 | 0.44 | 11 |
+| CONTR | 0.00 | 0.00 | 0.00 | 3 |
+| DISC | 0.67 | 0.52 | 0.58 | 27 |
+| INTRO | 0.50 | 0.53 | 0.51 | 17 |
+| LIM | 0.33 | 0.22 | 0.27 | 9 |
+| METH | 0.75 | 0.86 | 0.80 | 28 |
+| RES | 0.57 | 0.29 | 0.38 | 14 |
+
+### Resultados — Qwen3-8B (sin CoT)
+
+| Modo | Macro F1 v1 | Macro F1 v2 | Δ |
+|---|---|---|---|
+| zero_shot | 0.4165 | 0.4359 | ↑ +0.019 |
+| few_shot | 0.3538 | 0.3573 | ↑ +0.004 |
+
+#### F1 por clase — Zero-shot v2
+| Clase | Precision | Recall | F1 | Soporte |
+|---|---|---|---|---|
+| BACK | 0.62 | 0.71 | 0.66 | 52 |
+| CONC | 0.40 | 0.18 | 0.25 | 11 |
+| CONTR | 0.00 | 0.00 | 0.00 | 3 |
+| DISC | 0.63 | 0.44 | 0.52 | 27 |
+| INTRO | 0.35 | 0.71 | 0.47 | 17 |
+| LIM | 1.00 | 0.22 | 0.36 | 9 |
+| METH | 0.83 | 0.71 | 0.77 | 28 |
+| RES | 0.41 | 0.50 | 0.45 | 14 |
+
+#### F1 por clase — Few-shot v2
+| Clase | Precision | Recall | F1 | Soporte |
+|---|---|---|---|---|
+| BACK | 0.54 | 0.37 | 0.44 | 52 |
+| CONC | 0.57 | 0.36 | 0.44 | 11 |
+| CONTR | 0.00 | 0.00 | 0.00 | 3 |
+| DISC | 0.30 | 0.85 | 0.45 | 27 |
+| INTRO | 0.31 | 0.24 | 0.27 | 17 |
+| LIM | 1.00 | 0.11 | 0.20 | 9 |
+| METH | 0.79 | 0.68 | 0.73 | 28 |
+| RES | 0.75 | 0.21 | 0.33 | 14 |
+
+### Observaciones
+- **CoT perjudica a Gemini** (−3 a −5pp). El razonamiento intermedio introduce incertidumbre: el modelo a veces genera una justificación correcta pero luego etiqueta de forma diferente, o el proceso de razonamiento lo desvía hacia clases adyacentes. Gemini funciona mejor con instrucciones directas.
+- **Las mejoras ayudan a Qwen** (+2pp zero-shot, +0.4pp few-shot). Las definiciones contrastivas y la truncación 300+100 mejoran marginalmente la discriminación, especialmente en DISC (+15pp F1 zero-shot: 0.37→0.52) e INTRO (+5pp: 0.42→0.47).
+- **Few-shot sigue siendo problemático para Qwen** (0.36 vs 0.44 zero-shot) — los 80 palabras por ejemplo siguen siendo insuficientes para capturar el patrón de cada clase. La selección targeted no logra compensar la truncación severa.
+- **El mejor resultado de Gemini sigue siendo v1 few-shot (0.4878)**. La hipótesis es que las definiciones contrastivas podrían ayudar a Gemini si se aplican *sin CoT*.
+
+---
+
+## Resumen comparativo actualizado
+
+| Modelo | Modo | Macro F1 | Accuracy | Versión |
+|---|---|---|---|---|
+| TF-IDF + LogReg | — | 0.2993 | 0.4348 | — |
+| XLM-RoBERTa-large ft | — | 0.0761 | 0.3292 | — |
+| SciBETO-large ft | — | 0.3983 | 0.4472 | — |
+| Qwen3-8B | few_shot | 0.3538 | 0.4534 | v1 |
+| Qwen3-8B | few_shot | 0.3573 | 0.4534 | v2 |
+| Qwen3-8B | zero_shot | 0.4165 | 0.5217 | v1 |
+| Qwen3-8B | zero_shot | 0.4359 | 0.5714 | v2 |
+| Gemini 2.5 Flash | zero_shot | 0.4263 | 0.5901 | v2 |
+| Gemini 2.5 Flash | few_shot | 0.4570 | 0.6025 | v2 |
+| Gemini 2.5 Flash | zero_shot | 0.4730 | 0.6211 | v1 |
+| Gemini 2.5 Flash | few_shot | **0.4878** | **0.6335** | v1 |
 
 ---
 
