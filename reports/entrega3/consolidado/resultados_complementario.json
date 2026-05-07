@@ -1,0 +1,123 @@
+[
+  {
+    "modelo": "TF-IDF + LR",
+    "protocolo": "complementario",
+    "hardware": "CPU",
+    "n_test": 161,
+    "f1m_8c": 0.2993,
+    "f1m_4c": null,
+    "per_class_8c": [0.25, 0.51, 0.56, 0.27, 0.49, 0.15, 0.00, 0.15],
+    "n_invalid": 0,
+    "notas": "Logistic Regression, class_weight=balanced"
+  },
+  {
+    "modelo": "XLM-RoBERTa-large (fine-tuning)",
+    "protocolo": "complementario",
+    "hardware": "MPS (Apple M4 Pro)",
+    "n_test": 161,
+    "f1m_8c": 0.0761,
+    "f1m_4c": null,
+    "per_class_8c": [0.00, 0.50, 0.11, 0.00, 0.00, 0.00, 0.00, 0.00],
+    "n_invalid": 0,
+    "notas": "Head+Tail 128+382, early stopping patience=3, lr=5e-5. No convergió: predice mayoritariamente BACK."
+  },
+  {
+    "modelo": "SciBETO-large (fine-tuning, alt)",
+    "protocolo": "complementario",
+    "hardware": "MPS (Apple M4 Pro)",
+    "n_test": 161,
+    "f1m_8c": 0.3983,
+    "f1m_4c": null,
+    "per_class_8c": [0.38, 0.41, 0.72, 0.31, 0.49, 0.30, 0.22, 0.36],
+    "n_invalid": 0,
+    "notas": "Head+Tail 128+382, early stopping patience=3, lr=2e-5. Mejor checkpoint época 3."
+  },
+  {
+    "modelo": "Qwen3-8B · zero-shot v1",
+    "protocolo": "complementario",
+    "hardware": "NVIDIA RTX 4070 (HF Transformers, bf16)",
+    "n_test": 161,
+    "f1m_8c": 0.4165,
+    "f1m_4c": null,
+    "per_class_8c": [0.42, 0.60, 0.81, 0.43, 0.37, 0.35, 0.00, 0.36],
+    "n_invalid": 0,
+    "notas": "Instrucción base, thinking=False, greedy"
+  },
+  {
+    "modelo": "Qwen3-8B · few-shot v1",
+    "protocolo": "complementario",
+    "hardware": "NVIDIA RTX 4070 (HF Transformers, bf16)",
+    "n_test": 161,
+    "f1m_8c": 0.3538,
+    "f1m_4c": null,
+    "per_class_8c": [0.47, 0.41, 0.77, 0.22, 0.41, 0.35, 0.00, 0.20],
+    "n_invalid": 0,
+    "notas": "1 ejemplo/clase (80 palabras), few-shot empeora vs zero-shot"
+  },
+  {
+    "modelo": "Qwen3-8B · zero-shot v2",
+    "protocolo": "complementario",
+    "hardware": "NVIDIA RTX 4070 (HF Transformers, bf16)",
+    "n_test": 161,
+    "f1m_8c": 0.4359,
+    "f1m_4c": null,
+    "per_class_8c": [0.47, 0.66, 0.77, 0.45, 0.52, 0.25, 0.00, 0.36],
+    "n_invalid": 0,
+    "notas": "Definiciones contrastivas + truncación Head+Tail 300+100 palabras"
+  },
+  {
+    "modelo": "Qwen3-8B · few-shot v2",
+    "protocolo": "complementario",
+    "hardware": "NVIDIA RTX 4070 (HF Transformers, bf16)",
+    "n_test": 161,
+    "f1m_8c": 0.3573,
+    "f1m_4c": null,
+    "per_class_8c": [0.27, 0.44, 0.73, 0.33, 0.45, 0.44, 0.00, 0.20],
+    "n_invalid": 0,
+    "notas": "1 ejemplo/clase targeted (80 palabras), definiciones contrastivas"
+  },
+  {
+    "modelo": "gemini-2.5-flash · zero-shot v1",
+    "protocolo": "complementario",
+    "hardware": "API Google Cloud",
+    "n_test": 161,
+    "f1m_8c": 0.4730,
+    "f1m_4c": null,
+    "per_class_8c": [0.38, 0.66, 0.84, 0.44, 0.68, 0.50, 0.00, 0.29],
+    "n_invalid": 0,
+    "notas": "gemini-2.5-flash, temperatura=0, instrucción base con reglas de prioridad"
+  },
+  {
+    "modelo": "gemini-2.5-flash · few-shot v1",
+    "protocolo": "complementario",
+    "hardware": "API Google Cloud",
+    "n_test": 161,
+    "f1m_8c": 0.4878,
+    "f1m_4c": null,
+    "per_class_8c": [0.39, 0.68, 0.88, 0.40, 0.64, 0.57, 0.00, 0.33],
+    "n_invalid": 0,
+    "notas": "gemini-2.5-flash, 8-shot (1 ej/clase, 400 palabras), temperatura=0"
+  },
+  {
+    "modelo": "gemini-2.5-flash · zero-shot v2",
+    "protocolo": "complementario",
+    "hardware": "API Google Cloud",
+    "n_test": 161,
+    "f1m_8c": 0.4263,
+    "f1m_4c": null,
+    "per_class_8c": [0.39, 0.66, 0.82, 0.33, 0.55, 0.50, 0.00, 0.17],
+    "n_invalid": 0,
+    "notas": "gemini-2.5-flash, definiciones contrastivas + CoT + truncación 300+100 palabras"
+  },
+  {
+    "modelo": "gemini-2.5-flash · few-shot v2",
+    "protocolo": "complementario",
+    "hardware": "API Google Cloud",
+    "n_test": 161,
+    "f1m_8c": 0.4570,
+    "f1m_4c": null,
+    "per_class_8c": [0.51, 0.67, 0.80, 0.38, 0.58, 0.44, 0.00, 0.27],
+    "n_invalid": 0,
+    "notas": "gemini-2.5-flash, 8-shot targeted + definiciones contrastivas + CoT"
+  }
+]
