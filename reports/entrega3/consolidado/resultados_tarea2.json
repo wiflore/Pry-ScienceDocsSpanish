@@ -1,0 +1,50 @@
+{
+  "tfidf_noctx": {
+    "f1_pos": 0.0,
+    "precision_pos": 0.0,
+    "recall_pos": 0.0,
+    "f1_macro": 0.49230769230769234,
+    "n_pos_pred": 0,
+    "n_pos_true": 5,
+    "p_at_3_doc": 0.05319148936170213
+  },
+  "tfidf_ctx_oracle": {
+    "f1_pos": 1.0,
+    "precision_pos": 1.0,
+    "recall_pos": 1.0,
+    "f1_macro": 1.0,
+    "n_pos_pred": 5,
+    "n_pos_true": 5,
+    "p_at_3_doc": 0.05319148936170213
+  },
+  "gemini_noctx": {
+    "f1_pos": 0.09411764705882353,
+    "precision_pos": 0.05,
+    "recall_pos": 0.8,
+    "f1_macro": 0.3899159663865546,
+    "n_pos_pred": 80,
+    "n_pos_true": 5,
+    "n_invalid": 0,
+    "model": "gemini-3-flash-preview",
+    "p_at_3_doc": 0.05319148936170213
+  },
+  "gemini_ctx_oracle": {
+    "f1_pos": 0.07058823529411765,
+    "precision_pos": 0.0375,
+    "recall_pos": 0.6,
+    "f1_macro": 0.37406962785114045,
+    "n_pos_pred": 80,
+    "n_pos_true": 5,
+    "n_invalid": 0,
+    "model": "gemini-3-flash-preview",
+    "p_at_3_doc": 0.05319148936170213
+  },
+  "meta": {
+    "n_train": 1264,
+    "n_test": 165,
+    "base_rate_test": 0.030303030303030304,
+    "n_pos_test": 5,
+    "seed": 42,
+    "label_proxy": "etiqueta_anotador == 'CONTR'"
+  }
+}

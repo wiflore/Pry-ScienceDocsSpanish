@@ -29,5 +29,82 @@ pubmed_label_names:
   3: "OBJECTIVE"
   4: "RESULTS"
 
-# Número de etiquetas
+# Número de etiquetas IMRaD (esquema de 4 clases)
 num_labels: 4
+
+# ----------------------------------------------------------------------
+# Esquema extendido (8 clases) usado con el dataset de anotación manual
+# DatasetAnotacionManual_completo_revisadoxlsx.xlsx
+# ----------------------------------------------------------------------
+imrad8_labels:
+  - id: 0
+    code: "INTRO"
+    name: "Introducción"
+    description: "Sección introductoria, motivación, objetivo y contexto"
+  - id: 1
+    code: "BACK"
+    name: "Antecedentes"
+    description: "Marco teórico, revisión de literatura previa"
+  - id: 2
+    code: "METH"
+    name: "Metodología"
+    description: "Diseño, materiales, procedimientos, análisis"
+  - id: 3
+    code: "RES"
+    name: "Resultados"
+    description: "Hallazgos cuantitativos/cualitativos sin interpretación"
+  - id: 4
+    code: "DISC"
+    name: "Discusión"
+    description: "Interpretación de resultados, comparación con literatura"
+  - id: 5
+    code: "CONC"
+    name: "Conclusiones"
+    description: "Conclusiones finales, síntesis, implicaciones"
+  - id: 6
+    code: "CONTR"
+    name: "Contribuciones"
+    description: "Aportes, contribuciones del trabajo"
+  - id: 7
+    code: "LIM"
+    name: "Limitaciones"
+    description: "Limitaciones del estudio, trabajo futuro"
+
+imrad8_num_labels: 8
+
+# ----------------------------------------------------------------------
+# Esquema IMRaD-4 puro (colapsado desde IMRaD-8)
+# Iteración B: fusión de pares INTRO/BACK y DISC/CONC/CONTR/LIM
+# justificada por el EDA (similitud TF-IDF > 0.75 entre estos pares).
+# ----------------------------------------------------------------------
+imrad4_pure_labels:
+  - id: 0
+    code: "INTRO"
+    name: "Introducción"
+    description: "Introducción + Antecedentes (motivación, contexto, marco teórico)"
+  - id: 1
+    code: "METH"
+    name: "Metodología"
+    description: "Diseño, materiales, procedimientos, análisis"
+  - id: 2
+    code: "RES"
+    name: "Resultados"
+    description: "Hallazgos cuantitativos/cualitativos sin interpretación"
+  - id: 3
+    code: "DISC"
+    name: "Discusión"
+    description: "Discusión + Conclusiones + Contribuciones + Limitaciones"
+
+imrad4_pure_num_labels: 4
+
+# Mapeo desde IMRaD-8 a IMRaD-4 puro
+imrad8_to_imrad4_pure:
+  0: 0   # INTRO  -> Introducción
+  1: 0   # BACK   -> Introducción
+  2: 1   # METH   -> Metodología
+  3: 2   # RES    -> Resultados
+  4: 3   # DISC   -> Discusión
+  5: 3   # CONC   -> Discusión
+  6: 3   # CONTR  -> Discusión
+  7: 3   # LIM    -> Discusión
+

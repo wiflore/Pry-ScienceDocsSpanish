@@ -43,3 +43,12 @@ data/splits/
 # IDEs
 .vscode/
 .idea/
+
+# Experimentos antiguos (no rastrear: ruido de iteraciones previas)
+experiments/
+
+# Scripts auxiliares de entrega 3 (generación de reporte y figuras)
+scripts/build_report_notebook.py
+scripts/plot_tarea2.py
+scripts/run_tarea2_contribuciones.py
+
