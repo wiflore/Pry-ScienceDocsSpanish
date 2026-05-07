@@ -1,0 +1,59 @@
+# Configuración de modelos para clasificación retórica
+models:
+  scibeto-large:
+    enabled: true
+    type: "encoder"
+    hf_model_id: "Flaglab/SciBETO-large"
+    tokenizer_class: "RobertaTokenizerFast"
+    max_length: 512
+    batch_size: 16
+    learning_rate: 2.0e-5
+    num_epochs: 5
+    warmup_ratio: 0.1
+    weight_decay: 0.01
+    dtype: "float32"   # No fp16 en MPS
+    description: "SciBETO-large: RoBERTa-large pre-entrenado sobre texto científico en español (grupo FLAG, Uniandes)"
+
+  qwen25-3b:
+    enabled: true
+    type: "llm"
+    ollama_model: "qwen2.5:3b"
+    max_new_tokens: 50
+    temperature: 0.0
+    description: "Qwen2.5 3B vía Ollama — zero-shot y few-shot prompting"
+
+  scibeto-large-imrad8:
+    enabled: true
+    type: "encoder"
+    hf_model_id: "Flaglab/SciBETO-large"
+    tokenizer_class: "RobertaTokenizerFast"
+    num_labels: 8
+    max_length: 512
+    batch_size: 8
+    learning_rate: 2.0e-5
+    num_epochs: 5
+    warmup_ratio: 0.1
+    weight_decay: 0.01
+    dtype: "float32"
+    output_dir: "models/scibeto-large-imrad8"
+    description: "SciBETO-large fine-tuned sobre dataset de anotación manual (8 clases)"
+
+  scibeto-large-imrad8-v2:
+    enabled: true
+    type: "encoder"
+    hf_model_id: "Flaglab/SciBETO-large"
+    tokenizer_class: "RobertaTokenizerFast"
+    num_labels: 8
+    max_length: 512
+    truncation_strategy: "head_tail"  # 256 head + 254 tail
+    batch_size: 8
+    learning_rate: 2.0e-5
+    num_epochs: 5
+    warmup_ratio: 0.1
+    weight_decay: 0.01
+    dtype: "float32"
+    output_dir: "models/scibeto-large-imrad8-v2"
+    description: "SciBETO-large IMRaD-8 v2: limpieza editorial (A) + class weights (D) + head+tail (E)"
+
+# Directorio de salida de modelos entrenados
+output_dir: "models/"

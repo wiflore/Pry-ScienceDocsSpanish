@@ -1,0 +1,66 @@
+# Configuración del pipeline de datos
+data:
+  # Dataset fuente
+  source_dataset: "pietrolesci/pubmed-200k-rct"
+  source_split: "train"
+
+  # Estrategia de muestreo: ejemplos por etiqueta IMRaD
+  examples_per_imrad_label: 200   # 200 x 4 = 800 total
+
+  # Semilla aleatoria para reproducibilidad
+  random_seed: 42
+
+  # Splits
+  train_ratio: 0.80
+  val_ratio: 0.10
+  test_ratio: 0.10
+
+  # Traducción
+  translation:
+    enabled: true
+    model_id: "Helsinki-NLP/opus-mt-en-es"
+    batch_size: 32
+    max_length: 512
+
+  # Rutas de salida
+  paths:
+    raw: "data/raw/"
+    processed: "data/processed/"
+    translated: "data/processed/translated/"
+    splits: "data/splits/"
+    annotated: "data/annotated/"
+
+# ----------------------------------------------------------------------
+# Pipeline IMRaD-8 — dataset de anotación manual revisado
+# ----------------------------------------------------------------------
+imrad8:
+  source_xlsx: "data/annotated/DatasetAnotacionManual_completo_revisadoxlsx.xlsx"
+  text_column: "texto"
+  label_column: "etiqueta_anotador"
+
+  random_seed: 42
+  train_ratio: 0.80
+  val_ratio: 0.10
+  test_ratio: 0.10
+
+  paths:
+    processed: "data/processed/anotacion_manual/"
+    splits: "data/splits/imrad8_splits/"
+
+# ----------------------------------------------------------------------
+# Pipeline IMRaD-4 puro (Iteración B)
+# Reutiliza el mismo Excel que imrad8 y aplica el mapeo de labels.yaml
+# ----------------------------------------------------------------------
+imrad4:
+  source_xlsx: "data/annotated/DatasetAnotacionManual_completo_revisadoxlsx.xlsx"
+  text_column: "texto"
+  label_column: "etiqueta_anotador"
+
+  random_seed: 42
+  train_ratio: 0.80
+  val_ratio: 0.10
+  test_ratio: 0.10
+
+  paths:
+    processed: "data/processed/anotacion_manual/"
+    splits: "data/splits/imrad4_pure_splits/"
