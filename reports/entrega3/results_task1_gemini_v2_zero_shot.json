@@ -1,0 +1,85 @@
+{
+  "mode": "zero_shot",
+  "model": "gemini-2.5-flash",
+  "version": "v2",
+  "improvements": [
+    "contrastive_defs",
+    "targeted_fewshot",
+    "truncate_300_100",
+    "cot"
+  ],
+  "macro_f1": 0.4263,
+  "accuracy": 0.5901,
+  "classification_report": {
+    "BACK": {
+      "precision": 0.5443037974683544,
+      "recall": 0.8269230769230769,
+      "f1-score": 0.6564885496183206,
+      "support": 52.0
+    },
+    "CONC": {
+      "precision": 0.8,
+      "recall": 0.36363636363636365,
+      "f1-score": 0.5000000000000001,
+      "support": 11.0
+    },
+    "CONTR": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 3.0
+    },
+    "DISC": {
+      "precision": 0.7058823529411765,
+      "recall": 0.4444444444444444,
+      "f1-score": 0.5454545454545455,
+      "support": 27.0
+    },
+    "INTRO": {
+      "precision": 0.3684210526315789,
+      "recall": 0.4117647058823529,
+      "f1-score": 0.3888888888888889,
+      "support": 17.0
+    },
+    "LIM": {
+      "precision": 0.3333333333333333,
+      "recall": 0.1111111111111111,
+      "f1-score": 0.16666666666666666,
+      "support": 9.0
+    },
+    "METH": {
+      "precision": 0.7575757575757576,
+      "recall": 0.8928571428571429,
+      "f1-score": 0.819672131147541,
+      "support": 28.0
+    },
+    "RES": {
+      "precision": 0.75,
+      "recall": 0.21428571428571427,
+      "f1-score": 0.3333333333333333,
+      "support": 14.0
+    },
+    "accuracy": 0.5900621118012422,
+    "macro avg": {
+      "precision": 0.5324395367437751,
+      "recall": 0.4081278198925258,
+      "f1-score": 0.426313014388662,
+      "support": 161.0
+    },
+    "weighted avg": {
+      "precision": 0.60334099443866,
+      "recall": 0.5900621118012422,
+      "f1-score": 0.5595855574989709,
+      "support": 161.0
+    }
+  },
+  "unparsed_count": 0,
+  "n_test": 161,
+  "latency": {
+    "total_s": 174.27,
+    "mean_s": 1.082,
+    "median_s": 1.011,
+    "p95_s": 1.473,
+    "samples": 161
+  }
+}

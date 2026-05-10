@@ -1,0 +1,155 @@
+{
+  "modelo": "SciBETO-large (fine-tuned, 8 clases, Head+Tail, weighted loss)",
+  "macro_f1": 0.3983,
+  "accuracy": 0.4472,
+  "per_class_f1": {
+    "BACK": 0.4096,
+    "CONC": 0.3,
+    "CONTR": 0.2222,
+    "DISC": 0.4918,
+    "INTRO": 0.381,
+    "LIM": 0.3571,
+    "METH": 0.717,
+    "RES": 0.3077
+  },
+  "per_class_precision": {
+    "BACK": 0.5484,
+    "CONC": 0.3333,
+    "CONTR": 0.1667,
+    "DISC": 0.4412,
+    "INTRO": 0.32,
+    "LIM": 0.2632,
+    "METH": 0.76,
+    "RES": 0.3333
+  },
+  "per_class_recall": {
+    "BACK": 0.3269,
+    "CONC": 0.2727,
+    "CONTR": 0.3333,
+    "DISC": 0.5556,
+    "INTRO": 0.4706,
+    "LIM": 0.5556,
+    "METH": 0.6786,
+    "RES": 0.2857
+  },
+  "per_class_support": {
+    "BACK": 52,
+    "CONC": 11,
+    "CONTR": 3,
+    "DISC": 27,
+    "INTRO": 17,
+    "LIM": 9,
+    "METH": 28,
+    "RES": 14
+  },
+  "confusion_matrix": {
+    "labels": [
+      "BACK",
+      "CONC",
+      "CONTR",
+      "DISC",
+      "INTRO",
+      "LIM",
+      "METH",
+      "RES"
+    ],
+    "matrix": [
+      [
+        17,
+        1,
+        1,
+        12,
+        12,
+        7,
+        0,
+        2
+      ],
+      [
+        3,
+        3,
+        1,
+        3,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        1,
+        15,
+        1,
+        4,
+        0,
+        3
+      ],
+      [
+        3,
+        2,
+        0,
+        3,
+        8,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        1,
+        5,
+        2,
+        0
+      ],
+      [
+        2,
+        1,
+        2,
+        0,
+        0,
+        2,
+        19,
+        2
+      ],
+      [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        4,
+        4
+      ]
+    ]
+  },
+  "config": {
+    "model_id": "Flaglab/SciBETO-large",
+    "max_length": 512,
+    "head_tokens": 128,
+    "tail_tokens": 382,
+    "batch_size": 8,
+    "learning_rate": 2e-05,
+    "num_epochs": 10,
+    "early_stopping_patience": 3,
+    "classifier_dropout": 0.3,
+    "seed": 42,
+    "class_weighted_loss": true,
+    "train_samples": 1268,
+    "val_samples": 158,
+    "test_samples": 161
+  }
+}

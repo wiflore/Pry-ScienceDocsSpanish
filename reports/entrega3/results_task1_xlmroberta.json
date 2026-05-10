@@ -1,0 +1,155 @@
+{
+  "modelo": "XLM-RoBERTa-large (fine-tuned, 8 clases, Head+Tail, weighted loss)",
+  "macro_f1": 0.0761,
+  "accuracy": 0.3292,
+  "per_class_f1": {
+    "BACK": 0.4976,
+    "CONC": 0.0,
+    "CONTR": 0.0,
+    "DISC": 0.0,
+    "INTRO": 0.0,
+    "LIM": 0.0,
+    "METH": 0.1111,
+    "RES": 0.0
+  },
+  "per_class_precision": {
+    "BACK": 0.3333,
+    "CONC": 0.0,
+    "CONTR": 0.0,
+    "DISC": 0.0,
+    "INTRO": 0.0,
+    "LIM": 0.0,
+    "METH": 0.25,
+    "RES": 0.0
+  },
+  "per_class_recall": {
+    "BACK": 0.9808,
+    "CONC": 0.0,
+    "CONTR": 0.0,
+    "DISC": 0.0,
+    "INTRO": 0.0,
+    "LIM": 0.0,
+    "METH": 0.0714,
+    "RES": 0.0
+  },
+  "per_class_support": {
+    "BACK": 52,
+    "CONC": 11,
+    "CONTR": 3,
+    "DISC": 27,
+    "INTRO": 17,
+    "LIM": 9,
+    "METH": 28,
+    "RES": 14
+  },
+  "confusion_matrix": {
+    "labels": [
+      "BACK",
+      "CONC",
+      "CONTR",
+      "DISC",
+      "INTRO",
+      "LIM",
+      "METH",
+      "RES"
+    ],
+    "matrix": [
+      [
+        51,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        11,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        25,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        16,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        8,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        26,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        13,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ]
+    ]
+  },
+  "config": {
+    "model_id": "xlm-roberta-large",
+    "max_length": 512,
+    "head_tokens": 128,
+    "tail_tokens": 382,
+    "batch_size": 8,
+    "learning_rate": 5e-05,
+    "num_epochs": 10,
+    "early_stopping_patience": 3,
+    "classifier_dropout": 0.3,
+    "seed": 42,
+    "class_weighted_loss": true,
+    "train_samples": 1268,
+    "val_samples": 158,
+    "test_samples": 161
+  }
+}

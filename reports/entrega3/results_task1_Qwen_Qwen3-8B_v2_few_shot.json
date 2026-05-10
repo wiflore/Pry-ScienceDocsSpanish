@@ -1,0 +1,84 @@
+{
+  "mode": "few_shot",
+  "model": "Qwen/Qwen3-8B",
+  "version": "v2",
+  "improvements": [
+    "contrastive_defs",
+    "targeted_fewshot",
+    "truncate_300_100"
+  ],
+  "macro_f1": 0.3573,
+  "accuracy": 0.4534,
+  "classification_report": {
+    "BACK": {
+      "precision": 0.5428571428571428,
+      "recall": 0.36538461538461536,
+      "f1-score": 0.43678160919540227,
+      "support": 52.0
+    },
+    "CONC": {
+      "precision": 0.5714285714285714,
+      "recall": 0.36363636363636365,
+      "f1-score": 0.4444444444444444,
+      "support": 11.0
+    },
+    "CONTR": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 3.0
+    },
+    "DISC": {
+      "precision": 0.3026315789473684,
+      "recall": 0.8518518518518519,
+      "f1-score": 0.44660194174757284,
+      "support": 27.0
+    },
+    "INTRO": {
+      "precision": 0.3076923076923077,
+      "recall": 0.23529411764705882,
+      "f1-score": 0.26666666666666666,
+      "support": 17.0
+    },
+    "LIM": {
+      "precision": 1.0,
+      "recall": 0.1111111111111111,
+      "f1-score": 0.19999999999999998,
+      "support": 9.0
+    },
+    "METH": {
+      "precision": 0.7916666666666666,
+      "recall": 0.6785714285714286,
+      "f1-score": 0.7307692307692307,
+      "support": 28.0
+    },
+    "RES": {
+      "precision": 0.75,
+      "recall": 0.21428571428571427,
+      "f1-score": 0.3333333333333333,
+      "support": 14.0
+    },
+    "accuracy": 0.453416149068323,
+    "macro avg": {
+      "precision": 0.5332845334490072,
+      "recall": 0.35251690031101796,
+      "f1-score": 0.3573246532695813,
+      "support": 161.0
+    },
+    "weighted avg": {
+      "precision": 0.5564147468527985,
+      "recall": 0.453416149068323,
+      "f1-score": 0.44174735065697346,
+      "support": 161.0
+    }
+  },
+  "unparsed_count": 0,
+  "n_test": 161,
+  "latency": {
+    "total_s": 3708.76,
+    "mean_s": 23.036,
+    "median_s": 20.986,
+    "p95_s": 41.002,
+    "samples": 161
+  }
+}
