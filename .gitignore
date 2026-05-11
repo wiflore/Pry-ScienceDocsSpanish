@@ -52,3 +52,19 @@ scripts/build_report_notebook.py
 scripts/plot_tarea2.py
 scripts/run_tarea2_contribuciones.py
 
+
+# Temporary files
+~$*.xlsx
+~$*.docx
+~$*.doc
+
+# Logs
+logs/
+
+# LoRA Data
+data/lora_splits/
+
+# Specific Model Folders
+models/qwen3-lora-imrad/
+models/scibeto-consolidado/
+
