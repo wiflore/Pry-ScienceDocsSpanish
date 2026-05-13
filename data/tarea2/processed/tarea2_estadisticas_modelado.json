@@ -1,0 +1,99 @@
+{
+  "configuracion": {
+    "annotation_fraction": 0.1,
+    "max_neg_words": 500,
+    "max_pos_words": 800,
+    "min_neg_words": 250,
+    "min_negative_hard_fraction": 0.35,
+    "min_pos_words": 250,
+    "min_positive_conc_fraction": 0.1,
+    "target_negativos": 1000,
+    "target_positivos": 1000,
+    "usar_borderline_como_reserva": false,
+    "val_fraction": 0.1
+  },
+  "doc_overlaps_entre_splits": [],
+  "documentos_unicos": 2000,
+  "longitudes": {
+    "negativos": {
+      "max": 500,
+      "mediana": 380,
+      "min": 251
+    },
+    "positivos": {
+      "max": 800,
+      "mediana": 471,
+      "min": 250
+    },
+    "todo": {
+      "max": 800,
+      "mediana": 408,
+      "min": 250
+    }
+  },
+  "planb_dir": "tarea2_entrega_adaptada/tarea2_planb_full",
+  "por_etiqueta": {
+    "contribucion": 1000,
+    "no_contribucion": 1000
+  },
+  "por_razon_planb": {
+    "entidad_propia_objeto": 36,
+    "explicito_propio": 915,
+    "objetivo_sin_novedad": 114,
+    "pasivo_anclado_trabajo": 49,
+    "senal_contrib_no_propia": 111,
+    "tercero_citado": 139,
+    "zona_sin_senales": 636
+  },
+  "por_split_y_etiqueta": {
+    "gold_eval_pendiente": {
+      "contribucion": 100,
+      "no_contribucion": 100
+    },
+    "train_weak": {
+      "contribucion": 800,
+      "no_contribucion": 800
+    },
+    "val_weak": {
+      "contribucion": 100,
+      "no_contribucion": 100
+    }
+  },
+  "por_subtipo": {
+    "negativo_dificil": 364,
+    "negativo_facil": 636,
+    "positivo_planb_alto": 1000
+  },
+  "por_zona_retorica": {
+    "BACK": 126,
+    "CONC": 135,
+    "CONTR": 7,
+    "DISC": 52,
+    "INTRO": 835,
+    "LIM": 1,
+    "METH": 407,
+    "RES": 280,
+    "sin_asignacion": 157
+  },
+  "rechazos": {
+    "borderline": {},
+    "negativos": {
+      "demasiadas_urls_o_correos": 2,
+      "longitud_negativo_fuera_rango": 1221
+    },
+    "positivos": {
+      "demasiadas_urls_o_correos": 6,
+      "longitud_positivo_fuera_rango": 94,
+      "metadata_repositorio_o_licencia": 5
+    }
+  },
+  "seed": 42,
+  "splits": {
+    "gold_eval_pendiente": 200,
+    "train_weak": 1600,
+    "val_weak": 200
+  },
+  "total_candidatos": 2000,
+  "version": "tarea2_plan_b_modelado_v1",
+  "warnings": []
+}
