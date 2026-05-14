@@ -1,0 +1,43 @@
+{
+  "modelo": "SciBETO-large (fine-tuned, Tarea 2 binario, Head+Tail, weighted loss)",
+  "tarea": 2,
+  "f1_pos": 0.8426,
+  "precision_pos": 0.7333,
+  "recall_pos": 0.99,
+  "f1_macro": 0.8092,
+  "n_pos_pred": 135,
+  "n_pos_true": 100,
+  "confusion_matrix": {
+    "labels": [
+      "no_contribucion",
+      "contribucion"
+    ],
+    "matrix": [
+      [
+        64,
+        36
+      ],
+      [
+        1,
+        99
+      ]
+    ]
+  },
+  "config": {
+    "model_id": "Flaglab/SciBETO-large",
+    "max_length": 512,
+    "head_tokens": 128,
+    "tail_tokens": 382,
+    "batch_size": 8,
+    "learning_rate": 2e-05,
+    "num_epochs": 10,
+    "early_stopping_patience": 3,
+    "classifier_dropout": 0.3,
+    "seed": 42,
+    "class_weighted_loss": true,
+    "train_samples": 1600,
+    "val_samples": 200,
+    "test_samples": 200,
+    "dataset": "data\\tarea2\\processed\\tarea2_dataset_candidatos_2000.jsonl"
+  }
+}
