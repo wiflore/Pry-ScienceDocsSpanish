@@ -1,0 +1,37 @@
+{
+  "modelo": "TF-IDF + LogReg (Tarea 2 binario, class-weighted)",
+  "tarea": 2,
+  "f1_pos": 0.7739,
+  "precision_pos": 0.6846,
+  "recall_pos": 0.89,
+  "f1_macro": 0.734,
+  "n_pos_pred": 130,
+  "n_pos_true": 100,
+  "confusion_matrix": {
+    "labels": [
+      "no_contribucion",
+      "contribucion"
+    ],
+    "matrix": [
+      [
+        59,
+        41
+      ],
+      [
+        11,
+        89
+      ]
+    ]
+  },
+  "config": {
+    "tfidf_ngram": "(1,2)",
+    "tfidf_max_features": 100000,
+    "logreg_C": 1.0,
+    "class_weighted_loss": true,
+    "train_samples": 1600,
+    "val_samples": 200,
+    "test_samples": 200,
+    "seed": 42,
+    "dataset": "data\\tarea2\\processed\\tarea2_dataset_candidatos_2000.jsonl"
+  }
+}
