@@ -1,4 +1,4 @@
-"""
+arranquemos con esos endpoints"""
 Evaluación de Gemini Flash para clasificación retórica de 8 clases (Tarea 1).
 
 Modos:

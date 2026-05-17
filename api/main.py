@@ -7,8 +7,10 @@ Uso:
 
 Endpoints:
     POST /clasificar    — T1: clasifica fragmento en 8 clases IMRaD
-                          modelo: "scibeto" (default)
+                          modelo: "scibeto" (default) | "gemini"
     POST /contribucion  — T2: clasifica fragmento como contribucion / no_contribucion
+                          modelo: "scibeto" (default) | "gemini"
+    POST /analizar      — Pipeline: segmenta texto completo y aplica T1+T2 por párrafo
                           modelo: "scibeto" (default) | "gemini"
     GET  /health        — health check
     GET  /modelos       — lista modelos disponibles por tarea
@@ -63,9 +65,50 @@ _ALIAS_T2 = {
     "no contribución": 0, "no": 0, "0": 0,
 }
 
+T1_SYSTEM_PROMPT = """Eres un clasificador experto de fragmentos de artículos científicos en español.
+
+Tu tarea: asignar UNA etiqueta al fragmento según su función retórica dentro del documento.
+
+Responde ÚNICAMENTE con el código de la etiqueta (sin explicación, sin puntuación, sin texto adicional).
+
+Etiquetas válidas y sus definiciones:
+- INTRO  : Presenta el problema de investigación, motivación, objetivos y, a veces, una descripción general del enfoque propuesto.
+- BACK   : Describe el estado del arte, trabajos previos relevantes y el contexto teórico en que se enmarca la investigación.
+- METH   : Explica el diseño experimental, métodos, modelos, datos, materiales y procedimientos utilizados.
+- RES    : Presenta los resultados obtenidos (cifras, tablas, evaluaciones) generalmente sin interpretación extensiva.
+- DISC   : Interpreta los resultados, analiza sus implicaciones y los compara con trabajos previos.
+- CONTR  : Identifica explícitamente los aportes originales del trabajo (métodos propuestos, hallazgos principales, avances conceptuales).
+- LIM    : Describe restricciones del enfoque, supuestos adoptados, posibles fuentes de error o límites de generalización.
+- CONC   : Resume los principales hallazgos del trabajo y presenta líneas de trabajo futuro.
+
+Reglas de desambiguación (en orden de prioridad):
+1. Si el texto lista contribuciones originales explícitas ("este trabajo propone", "se presenta un nuevo método", "la principal contribución es"), usa CONTR.
+2. Si el texto menciona restricciones, supuestos o limitaciones del propio enfoque, usa LIM.
+3. Si el texto resume hallazgos y menciona trabajo futuro, usa CONC.
+4. Si el texto describe procedimientos, datos o diseño experimental, usa METH.
+5. Si el texto cita y describe trabajos previos sin reportar los propios resultados, usa BACK.
+6. Si el texto interpreta o discute los propios resultados, usa DISC.
+7. Si el texto reporta datos o medidas sin interpretación, usa RES.
+8. Si el texto presenta el problema, la brecha de conocimiento o los objetivos, usa INTRO."""
+
+T1_ALIAS_MAP = {
+    "back": "BACK", "conc": "CONC", "contr": "CONTR", "disc": "DISC",
+    "intro": "INTRO", "lim": "LIM", "meth": "METH", "res": "RES",
+    "antecedentes": "BACK", "antecedente": "BACK", "estado del arte": "BACK",
+    "conclusiones": "CONC", "conclusión": "CONC", "conclusion": "CONC",
+    "contribuciones": "CONTR", "contribución": "CONTR", "contribution": "CONTR",
+    "discusión": "DISC", "discusion": "DISC", "discussion": "DISC",
+    "introducción": "INTRO", "introduccion": "INTRO", "introduction": "INTRO",
+    "limitaciones": "LIM", "limitación": "LIM", "limitation": "LIM",
+    "metodología": "METH", "metodologia": "METH", "methodology": "METH",
+    "resultados": "RES", "results": "RES", "resultado": "RES",
+    "background": "BACK", "limitations": "LIM", "methods": "METH",
+}
+
 AVAILABLE_MODELS = {
-    "t1": ["scibeto"],
-    "t2": ["scibeto", "gemini"],
+    "t1":       ["scibeto", "gemini"],
+    "t2":       ["scibeto", "gemini"],
+    "pipeline": ["scibeto", "gemini"],
 }
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -102,6 +145,29 @@ class Prediction(BaseModel):
     confianza: float
     probabilidades: dict
     modelo_usado: str
+
+
+class AnalisisIn(BaseModel):
+    texto: str
+    modelo: str = "scibeto"
+
+
+class FragmentoResult(BaseModel):
+    fragmento: str
+    t1: str
+    confianza_t1: float
+    probabilidades_t1: dict
+    t2: str
+    confianza_t2: float
+    probabilidades_t2: dict
+    modelo_t1: str
+    modelo_t2: str
+
+
+class AnalisisOut(BaseModel):
+    n_fragmentos: int
+    modelo: str
+    fragmentos: list[FragmentoResult]
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -165,20 +231,11 @@ def _predict_t2_gemini(texto: str) -> Prediction:
     )
 
 
-# ── Endpoints ─────────────────────────────────────────────────────────────────
-@app.post("/clasificar", response_model=Prediction)
-def clasificar(body: TextIn):
-    """T1: clasificación retórica IMRaD (8 clases). Modelo: scibeto."""
-    if body.modelo != "scibeto":
-        raise HTTPException(
-            status_code=422,
-            detail=f"Modelo '{body.modelo}' no disponible para T1. "
-                   f"Disponibles: {AVAILABLE_MODELS['t1']}"
-        )
+# ── Helpers encoder ──────────────────────────────────────────────────────────
+def _predict_t1_scibeto(texto: str) -> Prediction:
+    """SciBETO-IMRaD para T1 (8 clases IMRaD)."""
     device = next(t1_model.parameters()).device
-    tokens = t1_tokenizer(
-        body.texto, truncation=True, max_length=512, return_tensors="pt"
-    )
+    tokens = t1_tokenizer(texto, truncation=True, max_length=512, return_tensors="pt")
     tokens = {k: v.to(device) for k, v in tokens.items()}
     with torch.no_grad():
         probs = t1_model(**tokens).logits.softmax(-1)[0].cpu()
@@ -189,6 +246,76 @@ def clasificar(body: TextIn):
         probabilidades={T1_LABELS[i]: round(float(probs[i]), 4) for i in range(len(T1_LABELS))},
         modelo_usado=T1_MODEL_ID,
     )
+
+
+def _predict_t1_gemini(texto: str) -> Prediction:
+    """Gemini 2.5 Flash para T1 (8 clases IMRaD)."""
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=503, detail="GEMINI_API_KEY no configurada.")
+    try:
+        from google import genai
+        from google.genai import types
+    except ImportError:
+        raise HTTPException(status_code=503, detail="SDK google-genai no instalado.")
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    full_prompt = f'{T1_SYSTEM_PROMPT}\n\nFragmento: "{texto}"\nEtiqueta:'
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=full_prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.0,
+            max_output_tokens=10,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
+        ),
+    )
+    raw = (response.text or "").strip().lower()
+    for ch in ".,;:!?\n\t \"'":
+        raw = raw.rstrip(ch)
+    label = T1_ALIAS_MAP.get(raw)
+    if label is None:
+        for alias, lbl in sorted(T1_ALIAS_MAP.items(), key=lambda x: -len(x[0])):
+            if alias in raw:
+                label = lbl
+                break
+    if label is None:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Gemini devolvió respuesta inesperada para T1: '{raw}'"
+        )
+    conf = 0.95
+    probs = {lbl: round(0.05 / (len(T1_LABELS) - 1), 4) for lbl in T1_LABELS}
+    probs[label] = conf
+    return Prediction(etiqueta=label, confianza=conf, probabilidades=probs, modelo_usado=GEMINI_MODEL)
+
+
+def _predict_t2_scibeto(texto: str) -> Prediction:
+    """SciBETO fine-tuneado para T2 (binario: contribucion / no_contribucion)."""
+    device = next(t2_model.parameters()).device
+    tokens = _tokenize_head_tail(t2_tokenizer, texto, T2_HEAD, T2_TAIL, device)
+    with torch.no_grad():
+        probs = t2_model(**tokens).logits.softmax(-1)[0].cpu()
+    idx = probs.argmax().item()
+    return Prediction(
+        etiqueta=T2_LABELS[idx],
+        confianza=round(float(probs[idx]), 4),
+        probabilidades={T2_LABELS[i]: round(float(probs[i]), 4) for i in range(len(T2_LABELS))},
+        modelo_usado=T2_MODEL_PATH,
+    )
+
+
+# ── Endpoints ─────────────────────────────────────────────────────────────────
+@app.post("/clasificar", response_model=Prediction)
+def clasificar(body: TextIn):
+    """T1: clasificación retórica IMRaD (8 clases). Modelo: scibeto | gemini."""
+    if body.modelo not in AVAILABLE_MODELS["t1"]:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Modelo '{body.modelo}' no disponible para T1. "
+                   f"Disponibles: {AVAILABLE_MODELS['t1']}"
+        )
+    if body.modelo == "gemini":
+        return _predict_t1_gemini(body.texto)
+    return _predict_t1_scibeto(body.texto)
 
 
 @app.post("/contribucion", response_model=Prediction)
@@ -205,25 +332,62 @@ def contribucion(body: TextIn):
         return _predict_t2_gemini(body.texto)
 
     # scibeto (default)
-    device = next(t2_model.parameters()).device
-    tokens = _tokenize_head_tail(t2_tokenizer, body.texto, T2_HEAD, T2_TAIL, device)
-    with torch.no_grad():
-        probs = t2_model(**tokens).logits.softmax(-1)[0].cpu()
-    idx = probs.argmax().item()
-    return Prediction(
-        etiqueta=T2_LABELS[idx],
-        confianza=round(float(probs[idx]), 4),
-        probabilidades={T2_LABELS[i]: round(float(probs[i]), 4) for i in range(len(T2_LABELS))},
-        modelo_usado=T2_MODEL_PATH,
-    )
+    return _predict_t2_scibeto(body.texto)
+
+
+def _segmentar(texto: str, min_palabras: int = 5) -> list[str]:
+    """Divide el texto en párrafos por líneas en blanco. Filtra fragmentos cortos."""
+    partes = [p.strip() for p in texto.split("\n\n") if p.strip()]
+    fragmentos = []
+    for parte in partes:
+        lineas = [ln.strip() for ln in parte.split("\n") if ln.strip()]
+        fragmentos.append(" ".join(lineas))
+    return [f for f in fragmentos if len(f.split()) >= min_palabras]
+
+
+@app.post("/analizar", response_model=AnalisisOut)
+def analizar(body: AnalisisIn):
+    """Pipeline completo: segmenta texto y aplica T1 + T2 a cada párrafo.
+    Modelo: scibeto | gemini."""
+    if body.modelo not in AVAILABLE_MODELS["pipeline"]:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Modelo '{body.modelo}' no disponible para pipeline. "
+                   f"Disponibles: {AVAILABLE_MODELS['pipeline']}"
+        )
+    fragmentos_texto = _segmentar(body.texto)
+    if not fragmentos_texto:
+        raise HTTPException(
+            status_code=422,
+            detail="El texto no contiene párrafos válidos (mínimo 5 palabras cada uno)."
+        )
+    _pred_t1 = _predict_t1_gemini if body.modelo == "gemini" else _predict_t1_scibeto
+    _pred_t2 = _predict_t2_gemini  if body.modelo == "gemini" else _predict_t2_scibeto
+    resultados: list[FragmentoResult] = []
+    for frag in fragmentos_texto:
+        p1 = _pred_t1(frag)
+        p2 = _pred_t2(frag)
+        resultados.append(FragmentoResult(
+            fragmento=frag,
+            t1=p1.etiqueta,
+            confianza_t1=p1.confianza,
+            probabilidades_t1=p1.probabilidades,
+            t2=p2.etiqueta,
+            confianza_t2=p2.confianza,
+            probabilidades_t2=p2.probabilidades,
+            modelo_t1=p1.modelo_usado,
+            modelo_t2=p2.modelo_usado,
+        ))
+    return AnalisisOut(n_fragmentos=len(resultados), modelo=body.modelo, fragmentos=resultados)
 
 
 @app.get("/modelos")
 def modelos():
-    """Lista los modelos disponibles por tarea."""
+    """Lista los modelos disponibles por tarea y endpoint."""
     return {
-        "t1": {"endpoint": "/clasificar",   "modelos": AVAILABLE_MODELS["t1"]},
-        "t2": {"endpoint": "/contribucion", "modelos": AVAILABLE_MODELS["t2"]},
+        "t1":       {"endpoint": "/clasificar",   "modelos": AVAILABLE_MODELS["t1"]},
+        "t2":       {"endpoint": "/contribucion", "modelos": AVAILABLE_MODELS["t2"]},
+        "pipeline": {"endpoint": "/analizar",     "modelos": AVAILABLE_MODELS["pipeline"]},
     }
 
 
