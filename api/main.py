@@ -29,7 +29,7 @@ load_dotenv()
 T1_MODEL_ID   = "wiflore/SciBETO-IMRaD"
 T1_LABELS     = ['INTRO', 'BACK', 'METH', 'RES', 'DISC', 'CONC', 'CONTR', 'LIM']
 
-T2_MODEL_PATH = "models/scibeto-task2-binario/best_model"
+T2_MODEL_PATH = "wiflore/SciBETO-T2-contribucion"
 T2_LABELS     = ['no_contribucion', 'contribucion']
 T2_HEAD, T2_TAIL = 128, 382
 
