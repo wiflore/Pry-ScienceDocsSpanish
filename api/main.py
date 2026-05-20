@@ -17,11 +17,12 @@ Endpoints:
 """
 
 import os
+import re
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModelForCausalLM
 import torch
 
 load_dotenv()
@@ -36,6 +37,33 @@ T2_HEAD, T2_TAIL = 128, 382
 
 GEMINI_MODEL  = "gemini-2.5-flash"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+QWEN_MODEL_ID = "Qwen/Qwen3-8B"
+
+# ── Lazy-load Qwen (se carga solo cuando se solicita por primera vez) ──────────
+_qwen_tokenizer = None
+_qwen_model = None
+
+def _get_qwen():
+    global _qwen_tokenizer, _qwen_model
+    if _qwen_model is None:
+        try:
+            dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+            _qwen_tokenizer = AutoTokenizer.from_pretrained(QWEN_MODEL_ID)
+            _qwen_model = AutoModelForCausalLM.from_pretrained(
+                QWEN_MODEL_ID,
+                torch_dtype=dtype,
+                device_map="auto",
+            )
+            _qwen_model.eval()
+        except Exception as exc:
+            # Resetear estado para permitir reintento en la siguiente llamada
+            _qwen_tokenizer = None
+            _qwen_model = None
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            raise HTTPException(status_code=503, detail=f"No se pudo cargar Qwen: {exc}") from exc
+    return _qwen_tokenizer, _qwen_model
 
 T2_SYSTEM_PROMPT = """Eres un clasificador experto de fragmentos de artículos científicos en español.
 
@@ -107,9 +135,9 @@ T1_ALIAS_MAP = {
 }
 
 AVAILABLE_MODELS = {
-    "t1":       ["scibeto", "gemini"],
-    "t2":       ["scibeto", "gemini"],
-    "pipeline": ["scibeto", "gemini"],
+    "t1":       ["scibeto", "gemini", "qwen"],
+    "t2":       ["scibeto", "gemini", "qwen"],
+    "pipeline": ["scibeto", "gemini", "qwen"],
 }
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -318,6 +346,73 @@ def _predict_t2_scibeto(texto: str) -> Prediction:
     )
 
 
+def _qwen_generate(system_prompt: str, user_content: str, max_new_tokens: int = 15) -> str:
+    """Llamada común de generación para Qwen3-8B."""
+    tokenizer, model = _get_qwen()
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user",   "content": user_content},
+    ]
+    prompt = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True,
+        enable_thinking=False,
+    )
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    try:
+        with torch.no_grad():
+            output_ids = model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                do_sample=False,
+                temperature=None,
+                top_p=None,
+                pad_token_id=tokenizer.eos_token_id,
+            )
+    except Exception as exc:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        raise HTTPException(status_code=503, detail=f"Error en inferencia Qwen: {exc}") from exc
+    new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
+    return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+
+def _predict_t1_qwen(texto: str) -> Prediction:
+    """Qwen3-8B para T1 (8 clases IMRaD), zero-shot."""
+    user_content = f'Fragmento: "{texto}"\nEtiqueta:'
+    raw = _qwen_generate(T1_SYSTEM_PROMPT, user_content, max_new_tokens=15).lower()
+    for ch in ".,;:!?\n\t \"'":
+        raw = raw.rstrip(ch)
+    label = T1_ALIAS_MAP.get(raw)
+    if label is None:
+        for alias, lbl in sorted(T1_ALIAS_MAP.items(), key=lambda x: -len(x[0])):
+            if alias in raw:
+                label = lbl
+                break
+    if label is None:
+        raise HTTPException(status_code=502, detail=f"Qwen devolvió respuesta inesperada para T1: '{raw}'")
+    conf = 0.95
+    probs = {lbl: round(0.05 / (len(T1_LABELS) - 1), 4) for lbl in T1_LABELS}
+    probs[label] = conf
+    return Prediction(etiqueta=label, confianza=conf, probabilidades=probs, modelo_usado=QWEN_MODEL_ID)
+
+
+def _predict_t2_qwen(texto: str) -> Prediction:
+    """Qwen3-8B para T2 (binario: contribucion / no_contribucion), zero-shot."""
+    user_content = f'Fragmento: "{texto}"\nEtiqueta:'
+    raw = _qwen_generate(T2_SYSTEM_PROMPT, user_content, max_new_tokens=15).lower()
+    for ch in ".,;:!?\n\t \"'":
+        raw = raw.rstrip(ch)
+    label_idx = _ALIAS_T2.get(raw, -1)
+    if label_idx == -1:
+        raise HTTPException(status_code=502, detail=f"Qwen devolvió respuesta inesperada para T2: '{raw}'")
+    label = T2_LABELS[label_idx]
+    conf = 0.95
+    probs = {T2_LABELS[1 - label_idx]: round(1 - conf, 4), label: round(conf, 4)}
+    return Prediction(etiqueta=label, confianza=conf, probabilidades=probs, modelo_usado=QWEN_MODEL_ID)
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 @app.post("/clasificar", response_model=Prediction)
 def clasificar(body: TextIn):
@@ -330,6 +425,8 @@ def clasificar(body: TextIn):
         )
     if body.modelo == "gemini":
         return _predict_t1_gemini(body.texto)
+    if body.modelo == "qwen":
+        return _predict_t1_qwen(body.texto)
     return _predict_t1_scibeto(body.texto)
 
 
@@ -345,27 +442,61 @@ def contribucion(body: TextIn):
 
     if body.modelo == "gemini":
         return _predict_t2_gemini(body.texto)
-
-    # scibeto (default)
+    if body.modelo == "qwen":
+        return _predict_t2_qwen(body.texto)
     return _predict_t2_scibeto(body.texto)
 
 
 def _segmentar(texto: str, min_palabras: int = 250, max_palabras: int = 1000) -> list[str]:
-    """Divide el texto en párrafos por líneas en blanco. Filtra fragmentos cortos.
-    Si un párrafo supera max_palabras, lo subdivide en chunks de ese tamaño."""
-    partes = [p.strip() for p in texto.split("\n\n") if p.strip()]
-    fragmentos = []
+    """Segmenta texto en chunks de [min_palabras, max_palabras] palabras.
+    1. Normaliza saltos de línea (\r\n, \r, múltiples \n).
+    2. Divide por párrafos: doble salto si existe, sino salto simple.
+    3. Fusiona párrafos consecutivos hasta alcanzar min_palabras.
+    4. Si un bloque supera max_palabras, lo subdivide en chunks de ese tamaño."""
+    # Normalizar saltos de línea: \r\n y \r → \n, luego colapsar 3+ \n en \n\n
+    texto = texto.replace("\r\n", "\n").replace("\r", "\n")
+    texto = re.sub(r'\n{3,}', '\n\n', texto)
+    # Elegir separador: doble salto si existe, sino salto simple
+    separador = "\n\n" if "\n\n" in texto else "\n"
+    partes = [p.strip() for p in texto.split(separador) if p.strip()]
+    # Normalizar líneas internas (por si quedan \n simples dentro de un párrafo)
+    partes = [" ".join(ln.strip() for ln in p.split("\n") if ln.strip()) for p in partes]
+
+    # Fusionar párrafos cortos con el siguiente hasta alcanzar min_palabras
+    merged: list[str] = []
+    buffer = ""
     for parte in partes:
-        lineas = [ln.strip() for ln in parte.split("\n") if ln.strip()]
-        texto_parte = " ".join(lineas)
-        palabras = texto_parte.split()
+        if buffer:
+            buffer = buffer + " " + parte
+        else:
+            buffer = parte
+        if len(buffer.split()) >= min_palabras:
+            merged.append(buffer)
+            buffer = ""
+    if buffer and len(buffer.split()) >= min_palabras:
+        merged.append(buffer)
+    elif buffer and merged:
+        # residuo menor a min_palabras: anexar al último bloque
+        merged[-1] = merged[-1] + " " + buffer
+    elif buffer:
+        # texto completo < min_palabras: enviar igualmente si tiene algo
+        if len(buffer.split()) >= 5:
+            merged.append(buffer)
+
+    # Subdividir bloques que superen max_palabras
+    fragmentos: list[str] = []
+    for bloque in merged:
+        palabras = bloque.split()
         if len(palabras) <= max_palabras:
-            fragmentos.append(texto_parte)
+            fragmentos.append(bloque)
         else:
             for i in range(0, len(palabras), max_palabras):
                 chunk = " ".join(palabras[i:i + max_palabras])
-                fragmentos.append(chunk)
-    return [f for f in fragmentos if len(f.split()) >= min_palabras]
+                if len(chunk.split()) >= min_palabras:
+                    fragmentos.append(chunk)
+                elif fragmentos:
+                    fragmentos[-1] = fragmentos[-1] + " " + chunk
+    return fragmentos
 
 
 @app.post("/analizar", response_model=AnalisisOut)
@@ -384,8 +515,8 @@ def analizar(body: AnalisisIn):
             status_code=422,
             detail="El texto no contiene párrafos válidos (mínimo 5 palabras cada uno)."
         )
-    _pred_t1 = _predict_t1_gemini if body.modelo == "gemini" else _predict_t1_scibeto
-    _pred_t2 = _predict_t2_gemini  if body.modelo == "gemini" else _predict_t2_scibeto
+    _pred_t1 = _predict_t1_gemini if body.modelo == "gemini" else (_predict_t1_qwen if body.modelo == "qwen" else _predict_t1_scibeto)
+    _pred_t2 = _predict_t2_gemini  if body.modelo == "gemini" else (_predict_t2_qwen if body.modelo == "qwen" else _predict_t2_scibeto)
     resultados: list[FragmentoResult] = []
     for frag in fragmentos_texto:
         p1 = _pred_t1(frag)
