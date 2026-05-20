@@ -335,13 +335,21 @@ def contribucion(body: TextIn):
     return _predict_t2_scibeto(body.texto)
 
 
-def _segmentar(texto: str, min_palabras: int = 5) -> list[str]:
-    """Divide el texto en párrafos por líneas en blanco. Filtra fragmentos cortos."""
+def _segmentar(texto: str, min_palabras: int = 250, max_palabras: int = 1000) -> list[str]:
+    """Divide el texto en párrafos por líneas en blanco. Filtra fragmentos cortos.
+    Si un párrafo supera max_palabras, lo subdivide en chunks de ese tamaño."""
     partes = [p.strip() for p in texto.split("\n\n") if p.strip()]
     fragmentos = []
     for parte in partes:
         lineas = [ln.strip() for ln in parte.split("\n") if ln.strip()]
-        fragmentos.append(" ".join(lineas))
+        texto_parte = " ".join(lineas)
+        palabras = texto_parte.split()
+        if len(palabras) <= max_palabras:
+            fragmentos.append(texto_parte)
+        else:
+            for i in range(0, len(palabras), max_palabras):
+                chunk = " ".join(palabras[i:i + max_palabras])
+                fragmentos.append(chunk)
     return [f for f in fragmentos if len(f.split()) >= min_palabras]
 
 
