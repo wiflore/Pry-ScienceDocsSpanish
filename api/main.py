@@ -19,6 +19,7 @@ Endpoints:
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
@@ -118,7 +119,21 @@ app = FastAPI(
         "T1 (/clasificar): clasifica fragmentos en 8 categorías IMRaD. "
         "T2 (/contribucion): detecta si un fragmento es una contribución científica."
     ),
-    version="2.0.0",
+    version="2.0.2",
+)
+
+CORS_ORIGINS = [o.strip() for o in os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173,https://app.prysciencedocs.xyz,https://prysciencedocs.xyz"
+).split(",") if o.strip()]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_origin_regex=r"^https://.*\.amplifyapp\.com$",
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 # ── Carga de modelos encoder ──────────────────────────────────────────────────
