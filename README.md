@@ -3,7 +3,7 @@
 **Proyecto final — Procesamiento de Lenguaje Natural**
 Universidad de los Andes
 
-**Integrantes:** Anderson Rodríguez · Andrés Romero · Daniel Caro · Nicolas Ríos Jr · William Florez
+**Integrantes:** Anderson Rodríguez · Andrés Romero · Daniel Caro · Nicolas Ríos · William Florez
 
 **Aplicación desplegada:** [https://app.prysciencedocs.xyz](https://app.prysciencedocs.xyz)
 
