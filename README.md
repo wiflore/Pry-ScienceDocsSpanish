@@ -1,59 +1,208 @@
-# Clasificación Retórica IMRaD de Fragmentos Científicos en Español
+# SciDocsSpanish — Clasificación Retórica de Artículos Científicos en Español
 
-Proyecto final — Maestría en Inteligencia Artificial, Universidad de los Andes
+**Proyecto final — Procesamiento de Lenguaje Natural**
+Universidad de los Andes
 
-**Integrantes:** William Florez, [Co-Autor 2]
+**Integrantes:** Anderson Rodríguez · Andrés Romero · Daniel Caro · Nicolas Ríos Jr · William Florez
+
+**Aplicación desplegada:** [https://app.prysciencedocs.xyz](https://app.prysciencedocs.xyz)
+
+---
 
 ## Descripción
 
-Este proyecto aborda la clasificación retórica automática de fragmentos de artículos científicos en español utilizando un esquema extendido IMRaD de 8 clases (INTRO, BACK, METH, RES, DISC, CONC, CONTR, LIM). Se comparan tres paradigmas de modelado:
-1. Baseline clásico (TF-IDF + LR)
-2. Fine-tuning de encoder de dominio (SciBETO-large)
-3. LLMs por prompting (Gemini 3 Flash, Qwen3-8B).
+Este proyecto aborda dos tareas de clasificación automática sobre fragmentos de artículos científicos escritos en español:
 
-El reporte final completo está disponible en [`reports/entrega_final/reporte_final.md`](reports/entrega_final/reporte_final.md).
+- **Tarea 1 — Clasificación retórica IMRaD (8 clases):** dado un fragmento, predice su rol estructural: `INTRO`, `BACK`, `METH`, `RES`, `DISC`, `CONC`, `CONTR` o `LIM`.
+- **Tarea 2 — Detección de contribución (binario):** determina si el fragmento declara una contribución científica explícita del trabajo (`contribucion` / `no_contribucion`).
 
-## Requisitos y Entorno
+Se comparan tres paradigmas de modelado:
 
-Para reproducir los experimentos, se requiere un entorno Python 3.9+ (preferiblemente Apple Silicon M-series para Qwen/MLX).
+| Paradigma | Modelos |
+|---|---|
+| Baseline clásico | TF-IDF + Regresión Logística |
+| Fine-tuning de encoder | SciBETO-large (fine-tuned) |
+| LLM por prompting | Gemini 2.5 Flash · Qwen3-8B |
+
+Los modelos fine-tuned están publicados en HuggingFace:
+- **T1:** [wiflore/SciBETO-IMRaD](https://huggingface.co/wiflore/SciBETO-IMRaD)
+- **T2:** [wiflore/SciBETO-T2-contribucion](https://huggingface.co/wiflore/SciBETO-T2-contribucion)
+
+---
+
+## Estructura del Repositorio
+
+```
+├── api/                  # API REST (FastAPI)
+│   └── main.py
+├── configs/              # Archivos de configuración YAML y prompts
+│   ├── models.yaml
+│   ├── labels.yaml
+│   ├── data.yaml
+│   └── prompts/
+├── data/                 # Datos anotados y procesados
+│   ├── annotated/
+│   ├── mock_data/
+│   └── processed/
+├── models/               # Configuración local del modelo SciBETO
+│   └── scibeto-large-imrad/
+├── notebooks/            # Notebooks de análisis, entrenamiento y pruebas
+│   ├── pipeline_imrad.ipynb
+│   └── pipeline_consolidado.ipynb
+├── reports/              # Resultados y reportes experimentales
+│   └── entrega3/
+├── scripts/              # Scripts de evaluación y utilidades
+├── src/                  # Código fuente modular
+│   ├── data/
+│   ├── evaluation/
+│   └── models/
+├── .env.example          # Plantilla de variables de entorno
+├── requirements.txt      # Dependencias del proyecto
+└── README.md
+```
+
+---
+
+## Dependencias y Entorno de Ejecución
+
+**Requisitos:** Python 3.10+, pip, GPU con CUDA (recomendado para SciBETO).
 
 ```bash
-# Crear entorno virtual e instalar dependencias
-python3 -m venv .venv
+# 1. Crear entorno virtual
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+# Linux / macOS
 source .venv/bin/activate
+
+# 2. Instalar dependencias
 pip install -r requirements.txt
 ```
 
-## Estructura de Archivos Principal
+---
 
-*   `notebooks/pipeline_consolidado.ipynb`: **Notebook principal**. Contiene la carga de datos, splits, evaluación del baseline TF-IDF, fine-tuning de SciBETO y evaluación zero-shot de Gemini/Qwen.
-*   `reports/entrega_final/reporte_final.md`: Artículo académico formato IEEE con análisis detallado.
+## Configuración de Variables de Entorno
 
-## Instrucciones de Uso y Reproducción
+Copiar `.env.example` a `.env` y completar los valores:
 
-### 1. Ejecutar el Pipeline Consolidado
-Toda la lógica base se encuentra en el Jupyter Notebook:
 ```bash
-jupyter notebook notebooks/pipeline_consolidado.ipynb
+cp .env.example .env
 ```
-El notebook está diseñado para correr de principio a fin de manera secuencial, generando las métricas reportadas en el documento final.
 
-## Ejemplos de Input / Output
+| Variable | Descripción | Requerida para |
+|---|---|---|
+| `GEMINI_API_KEY` | API key de Google AI Studio | Modelo Gemini |
+| `HuggingFace` | Token de HuggingFace (lectura) | Descargar modelos privados |
+| `HuggingFace_USERNAME` | Usuario de HuggingFace | Subir modelos |
 
-**Input (Fragmento de artículo científico):**
+Obtener clave Gemini: [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+
+---
+
+## Parametrización
+
+El sistema se configura mediante archivos YAML en `configs/`:
+
+| Archivo | Descripción |
+|---|---|
+| `configs/models.yaml` | IDs de modelos, hiperparámetros de entrenamiento, batch size, etc. |
+| `configs/labels.yaml` | Etiquetas de cada tarea y sus descripciones |
+| `configs/data.yaml` | Rutas de datos, tamaños de split, semillas |
+| `configs/prompts/` | Prompts zero-shot y few-shot para modelos LLM |
+
+---
+
+## Pasos de Despliegue (Local)
+
+### Levantar la API
+
+```bash
+# Desde la raíz del repositorio
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+```
+
+La API queda disponible en `http://localhost:8000`. Documentación interactiva: `http://localhost:8000/docs`.
+
+### Endpoints principales
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `POST` | `/clasificar` | T1: clasifica un fragmento en 8 clases IMRaD |
+| `POST` | `/contribucion` | T2: detecta si el fragmento es una contribución |
+| `POST` | `/analizar` | Pipeline completo: segmenta texto y aplica T1 + T2 |
+| `GET` | `/health` | Estado del servidor |
+| `GET` | `/modelos` | Modelos disponibles por tarea |
+
+**Parámetro `modelo`:** `"scibeto"` (default) · `"gemini"` · `"qwen"`
+
+---
+
+## Ejemplos de Uso
+
+### Vía interfaz web
+
+Acceder a [https://app.prysciencedocs.xyz](https://app.prysciencedocs.xyz), pegar el texto del artículo, seleccionar la familia de modelo y hacer clic en **Analizar T1 + T2**.
+
+### Vía API (curl)
+
+```bash
+# T1: clasificar un fragmento
+curl -X POST http://localhost:8000/clasificar \
+  -H "Content-Type: application/json" \
+  -d '{"texto": "Se diseñó un experimento controlado con 60 participantes divididos en dos grupos.", "modelo": "scibeto"}'
+
+# Pipeline completo sobre texto largo
+curl -X POST http://localhost:8000/analizar \
+  -H "Content-Type: application/json" \
+  -d '{"texto": "<texto completo del artículo>", "modelo": "gemini"}'
+```
+
+**Input (fragmento):**
 > "Sin embargo, los resultados de este estudio están limitados por el tamaño reducido de la muestra y el uso de datos transversales que impiden establecer relaciones causales."
 
 **Output esperado:**
-> `LIM` (Limitaciones)
+```json
+{
+  "etiqueta": "LIM",
+  "confianza": 0.97,
+  "probabilidades": {"LIM": 0.97, "DISC": 0.02, ...},
+  "modelo_usado": "wiflore/SciBETO-IMRaD"
+}
+```
 
-## Consideraciones de Modelos y Despliegue
+---
 
-*   **SciBETO-large:** Requiere ~1.5 GB de memoria VRAM. Es ideal para procesamiento masivo offline y on-premises. Latencia: <10ms por fragmento en GPU.
-*   **Gemini 3 Flash:** No requiere infraestructura propia, operado vía API. Latencia: 1–3s por petición HTTP. Excelente costo/beneficio en bajo volumen.
-*   **Qwen3-8B (4-bit):** Requiere ~5.5 GB de memoria unificada en dispositivos Apple. Ejecutado vía MLX, demostrando que es posible operar modelos Llama3/Qwen3 en entornos limitados y privados.
+## Reproducción de Experimentos
 
-## Enlaces
-*   **Checkpoint SciBETO-IMRaD:** [wiflore/SciBETO-IMRaD (HuggingFace)](https://huggingface.co/wiflore/SciBETO-IMRaD)
+El notebook principal contiene todo el pipeline de entrenamiento y evaluación:
+
+```bash
+jupyter notebook notebooks/pipeline_consolidado.ipynb
+```
+
+Los resultados individuales por experimento están en `reports/entrega3/`:
+- `experimentos_task1.md` — descripción y métricas de los 6 experimentos T1
+- `experimentos_task2.md` — descripción y métricas de los 4 experimentos T2
+- `consolidado/` — JSONs consolidados con todas las métricas
+
+---
+
+## Modelos y Rendimiento
+
+| Modelo | Tarea | Macro F1 |
+|---|---|---|
+| TF-IDF + LR (baseline) | T1 | 0.52 |
+| SciBETO fine-tuned | T1 | 0.74 |
+| Gemini 2.5 Flash (v2, few-shot) | T1 | 0.65 |
+| Qwen3-8B (few-shot) | T1 | 0.61 |
+| SciBETO fine-tuned | T2 | 0.78 |
+| Gemini 2.5 Flash | T2 | 0.71 |
+
+---
 
 ## Trabajo Futuro
-*   **Fine-tuning de LLMs (LoRA):** Como trabajo futuro por fuera del alcance actual, se propone explorar el ajuste fino de modelos fundacionales abiertos (como Qwen3-8B) mediante Low-Rank Adaptation (LoRA) para buscar mejorar las métricas en clases minoritarias manteniendo control sobre los pesos del modelo.
+
+- Fine-tuning de LLMs (LoRA) sobre Qwen3-8B para clases minoritarias.
+- Anotación de más ejemplos de las clases `CONTR` y `LIM`.
+- Despliegue en producción con autoscaling (AWS ECS / Lambda).
