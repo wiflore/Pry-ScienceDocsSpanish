@@ -132,6 +132,8 @@ T1_ALIAS_MAP = {
     "metodología": "METH", "metodologia": "METH", "methodology": "METH",
     "resultados": "RES", "results": "RES", "resultado": "RES",
     "background": "BACK", "limitations": "LIM", "methods": "METH",
+    "n/a": "OTRO", "na": "OTRO", "otro": "OTRO", "other": "OTRO",
+    "ninguno": "OTRO", "none": "OTRO", "no aplica": "OTRO",
 }
 
 AVAILABLE_MODELS = {
@@ -325,6 +327,8 @@ def _predict_t1_gemini(texto: str) -> Prediction:
             status_code=502,
             detail=f"Gemini devolvió respuesta inesperada para T1: '{raw}'"
         )
+    if label == "OTRO":
+        return Prediction(etiqueta="OTRO", confianza=1.0, probabilidades={"OTRO": 1.0}, modelo_usado=GEMINI_MODEL)
     conf = 0.95
     probs = {lbl: round(0.05 / (len(T1_LABELS) - 1), 4) for lbl in T1_LABELS}
     probs[label] = conf
@@ -392,6 +396,8 @@ def _predict_t1_qwen(texto: str) -> Prediction:
                 break
     if label is None:
         raise HTTPException(status_code=502, detail=f"Qwen devolvió respuesta inesperada para T1: '{raw}'")
+    if label == "OTRO":
+        return Prediction(etiqueta="OTRO", confianza=1.0, probabilidades={"OTRO": 1.0}, modelo_usado=QWEN_MODEL_ID)
     conf = 0.95
     probs = {lbl: round(0.05 / (len(T1_LABELS) - 1), 4) for lbl in T1_LABELS}
     probs[label] = conf
