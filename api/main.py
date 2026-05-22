@@ -15,9 +15,8 @@ Endpoints:
     GET  /health        — health check
     GET  /modelos       — lista modelos disponibles por tarea
 
-Requisito para modelo "qwen": Ollama corriendo en OLLAMA_BASE_URL con el modelo QWEN_OLLAMA_MODEL.
-    ollama pull qwen3:8b
-    ollama serve
+Requisito para modelo "qwen": OPENROUTER_API_KEY configurada en .env.
+    Modelo por defecto: qwen/qwen3-8b:free (configurable con OPENROUTER_MODEL).
 """
 
 import os
@@ -42,8 +41,8 @@ T2_HEAD, T2_TAIL = 128, 382
 GEMINI_MODEL   = "gemini-2.5-flash"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-QWEN_OLLAMA_MODEL = os.getenv("QWEN_OLLAMA_MODEL", "qwen3:8b")
-OLLAMA_BASE_URL   = os.getenv("OLLAMA_BASE_URL",   "http://localhost:11434")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_MODEL   = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
 
 T2_SYSTEM_PROMPT = """Eres un clasificador experto de fragmentos de artículos científicos en español.
 
@@ -330,31 +329,39 @@ def _predict_t2_scibeto(texto: str) -> Prediction:
     )
 
 
-# ── Helpers Qwen (Ollama) ─────────────────────────────────────────────────────
-def _ollama_chat(prompt: str, max_tokens: int = 15) -> str:
-    """Envía un prompt a Qwen3 via Ollama y devuelve el texto limpio.
-    Requiere: `ollama serve` corriendo y el modelo descargado (`ollama pull qwen3:8b`).
+# ── Helpers Qwen (OpenRouter) ────────────────────────────────────────────────
+def _openrouter_chat(prompt: str, max_tokens: int = 15) -> str:
+    """Envía un prompt a OPENROUTER_MODEL via OpenRouter y devuelve el texto limpio.
     Añade /no_think para desactivar el chain-of-thought de Qwen3.
-    Elimina bloques <think>...</think> si el modelo los genera de todas formas."""
+    Elimina bloques <think>...</think> si el modelo los incluye."""
+    if not OPENROUTER_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="OPENROUTER_API_KEY no configurada en el entorno."
+        )
     try:
-        import ollama as _ollama_sdk
+        from openai import OpenAI
     except ImportError:
         raise HTTPException(
             status_code=503,
-            detail="SDK ollama no instalado. Ejecuta: pip install ollama"
+            detail="SDK openai no instalado. Ejecuta: pip install openai"
         )
     try:
-        client = _ollama_sdk.Client(host=OLLAMA_BASE_URL)
-        resp = client.chat(
-            model=QWEN_OLLAMA_MODEL,
-            messages=[{"role": "user", "content": prompt + " /no_think"}],
-            options={"temperature": 0, "num_predict": max_tokens},
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=OPENROUTER_API_KEY,
         )
-        raw = resp.message.content.strip()
+        resp = client.chat.completions.create(
+            model=OPENROUTER_MODEL,
+            messages=[{"role": "user", "content": prompt + " /no_think"}],
+            max_tokens=max_tokens,
+            temperature=0.0,
+        )
+        raw = (resp.choices[0].message.content or "").strip()
     except Exception as exc:
         raise HTTPException(
             status_code=503,
-            detail=f"Ollama no disponible en {OLLAMA_BASE_URL}: {exc}"
+            detail=f"OpenRouter no disponible: {exc}"
         )
     # Eliminar bloque <think>…</think> por si Qwen3 lo incluye de todas formas
     raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
@@ -362,9 +369,9 @@ def _ollama_chat(prompt: str, max_tokens: int = 15) -> str:
 
 
 def _predict_t1_qwen(texto: str) -> Prediction:
-    """Qwen3-8B via Ollama para T1 (8 clases IMRaD)."""
+    """Qwen3-8B via OpenRouter para T1 (8 clases IMRaD)."""
     full_prompt = f'{T1_SYSTEM_PROMPT}\n\nFragmento: "{texto}"\nEtiqueta:'
-    raw = _ollama_chat(full_prompt, max_tokens=15).lower()
+    raw = _openrouter_chat(full_prompt, max_tokens=15).lower()
     for ch in ".,;:!?\n\t \"'":
         raw = raw.rstrip(ch)
     label = T1_ALIAS_MAP.get(raw)
@@ -379,17 +386,17 @@ def _predict_t1_qwen(texto: str) -> Prediction:
             detail=f"Qwen devolvió respuesta inesperada para T1: '{raw}'"
         )
     if label == "OTRO":
-        return Prediction(etiqueta="OTRO", confianza=1.0, probabilidades={"OTRO": 1.0}, modelo_usado=QWEN_OLLAMA_MODEL)
+        return Prediction(etiqueta="OTRO", confianza=1.0, probabilidades={"OTRO": 1.0}, modelo_usado=OPENROUTER_MODEL)
     conf = 0.90
     probs = {lbl: round(0.10 / (len(T1_LABELS) - 1), 4) for lbl in T1_LABELS}
     probs[label] = conf
-    return Prediction(etiqueta=label, confianza=conf, probabilidades=probs, modelo_usado=QWEN_OLLAMA_MODEL)
+    return Prediction(etiqueta=label, confianza=conf, probabilidades=probs, modelo_usado=OPENROUTER_MODEL)
 
 
 def _predict_t2_qwen(texto: str) -> Prediction:
-    """Qwen3-8B via Ollama para T2 (binario: contribucion / no_contribucion)."""
+    """Qwen3-8B via OpenRouter para T2 (binario: contribucion / no_contribucion)."""
     full_prompt = f'{T2_SYSTEM_PROMPT}\n\nFragmento: "{texto}"\nEtiqueta:'
-    raw = _ollama_chat(full_prompt, max_tokens=15).lower()
+    raw = _openrouter_chat(full_prompt, max_tokens=15).lower()
     label_idx = _ALIAS_T2.get(raw, -1)
     if label_idx == -1:
         raise HTTPException(
@@ -399,7 +406,7 @@ def _predict_t2_qwen(texto: str) -> Prediction:
     label = T2_LABELS[label_idx]
     conf = 0.90
     probs = {T2_LABELS[1 - label_idx]: round(1 - conf, 4), label: round(conf, 4)}
-    return Prediction(etiqueta=label, confianza=conf, probabilidades=probs, modelo_usado=QWEN_OLLAMA_MODEL)
+    return Prediction(etiqueta=label, confianza=conf, probabilidades=probs, modelo_usado=OPENROUTER_MODEL)
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
