@@ -7,13 +7,17 @@ Uso:
 
 Endpoints:
     POST /clasificar    — T1: clasifica fragmento en 8 clases IMRaD
-                          modelo: "scibeto" (default) | "gemini"
+                          modelo: "scibeto" (default) | "gemini" | "qwen"
     POST /contribucion  — T2: clasifica fragmento como contribucion / no_contribucion
-                          modelo: "scibeto" (default) | "gemini"
+                          modelo: "scibeto" (default) | "gemini" | "qwen"
     POST /analizar      — Pipeline: segmenta texto completo y aplica T1+T2 por párrafo
-                          modelo: "scibeto" (default) | "gemini"
+                          modelo: "scibeto" (default) | "gemini" | "qwen"
     GET  /health        — health check
     GET  /modelos       — lista modelos disponibles por tarea
+
+Requisito para modelo "qwen": Ollama corriendo en OLLAMA_BASE_URL con el modelo QWEN_OLLAMA_MODEL.
+    ollama pull qwen3:8b
+    ollama serve
 """
 
 import os
@@ -35,8 +39,11 @@ T2_MODEL_PATH = "wiflore/SciBETO-T2-contribucion"
 T2_LABELS     = ['no_contribucion', 'contribucion']
 T2_HEAD, T2_TAIL = 128, 382
 
-GEMINI_MODEL  = "gemini-2.5-flash"
+GEMINI_MODEL   = "gemini-2.5-flash"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+QWEN_OLLAMA_MODEL = os.getenv("QWEN_OLLAMA_MODEL", "qwen3:8b")
+OLLAMA_BASE_URL   = os.getenv("OLLAMA_BASE_URL",   "http://localhost:11434")
 
 T2_SYSTEM_PROMPT = """Eres un clasificador experto de fragmentos de artículos científicos en español.
 
@@ -110,9 +117,9 @@ T1_ALIAS_MAP = {
 }
 
 AVAILABLE_MODELS = {
-    "t1":       ["scibeto", "gemini"],
-    "t2":       ["scibeto", "gemini"],
-    "pipeline": ["scibeto", "gemini"],
+    "t1":       ["scibeto", "gemini", "qwen"],
+    "t2":       ["scibeto", "gemini", "qwen"],
+    "pipeline": ["scibeto", "gemini", "qwen"],
 }
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -122,7 +129,7 @@ app = FastAPI(
         "T1 (/clasificar): clasifica fragmentos en 8 categorías IMRaD. "
         "T2 (/contribucion): detecta si un fragmento es una contribución científica."
     ),
-    version="2.0.2",
+    version="2.1.0",
 )
 
 CORS_ORIGINS = [o.strip() for o in os.getenv(
@@ -323,10 +330,82 @@ def _predict_t2_scibeto(texto: str) -> Prediction:
     )
 
 
+# ── Helpers Qwen (Ollama) ─────────────────────────────────────────────────────
+def _ollama_chat(prompt: str, max_tokens: int = 15) -> str:
+    """Envía un prompt a Qwen3 via Ollama y devuelve el texto limpio.
+    Requiere: `ollama serve` corriendo y el modelo descargado (`ollama pull qwen3:8b`).
+    Añade /no_think para desactivar el chain-of-thought de Qwen3.
+    Elimina bloques <think>...</think> si el modelo los genera de todas formas."""
+    try:
+        import ollama as _ollama_sdk
+    except ImportError:
+        raise HTTPException(
+            status_code=503,
+            detail="SDK ollama no instalado. Ejecuta: pip install ollama"
+        )
+    try:
+        client = _ollama_sdk.Client(host=OLLAMA_BASE_URL)
+        resp = client.chat(
+            model=QWEN_OLLAMA_MODEL,
+            messages=[{"role": "user", "content": prompt + " /no_think"}],
+            options={"temperature": 0, "num_predict": max_tokens},
+        )
+        raw = resp.message.content.strip()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Ollama no disponible en {OLLAMA_BASE_URL}: {exc}"
+        )
+    # Eliminar bloque <think>…</think> por si Qwen3 lo incluye de todas formas
+    raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+    return raw
+
+
+def _predict_t1_qwen(texto: str) -> Prediction:
+    """Qwen3-8B via Ollama para T1 (8 clases IMRaD)."""
+    full_prompt = f'{T1_SYSTEM_PROMPT}\n\nFragmento: "{texto}"\nEtiqueta:'
+    raw = _ollama_chat(full_prompt, max_tokens=15).lower()
+    for ch in ".,;:!?\n\t \"'":
+        raw = raw.rstrip(ch)
+    label = T1_ALIAS_MAP.get(raw)
+    if label is None:
+        for alias, lbl in sorted(T1_ALIAS_MAP.items(), key=lambda x: -len(x[0])):
+            if alias in raw:
+                label = lbl
+                break
+    if label is None:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Qwen devolvió respuesta inesperada para T1: '{raw}'"
+        )
+    if label == "OTRO":
+        return Prediction(etiqueta="OTRO", confianza=1.0, probabilidades={"OTRO": 1.0}, modelo_usado=QWEN_OLLAMA_MODEL)
+    conf = 0.90
+    probs = {lbl: round(0.10 / (len(T1_LABELS) - 1), 4) for lbl in T1_LABELS}
+    probs[label] = conf
+    return Prediction(etiqueta=label, confianza=conf, probabilidades=probs, modelo_usado=QWEN_OLLAMA_MODEL)
+
+
+def _predict_t2_qwen(texto: str) -> Prediction:
+    """Qwen3-8B via Ollama para T2 (binario: contribucion / no_contribucion)."""
+    full_prompt = f'{T2_SYSTEM_PROMPT}\n\nFragmento: "{texto}"\nEtiqueta:'
+    raw = _ollama_chat(full_prompt, max_tokens=15).lower()
+    label_idx = _ALIAS_T2.get(raw, -1)
+    if label_idx == -1:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Qwen devolvió respuesta inesperada para T2: '{raw}'"
+        )
+    label = T2_LABELS[label_idx]
+    conf = 0.90
+    probs = {T2_LABELS[1 - label_idx]: round(1 - conf, 4), label: round(conf, 4)}
+    return Prediction(etiqueta=label, confianza=conf, probabilidades=probs, modelo_usado=QWEN_OLLAMA_MODEL)
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 @app.post("/clasificar", response_model=Prediction)
 def clasificar(body: TextIn):
-    """T1: clasificación retórica IMRaD (8 clases). Modelo: scibeto | gemini."""
+    """T1: clasificación retórica IMRaD (8 clases). Modelo: scibeto | gemini | qwen."""
     if body.modelo not in AVAILABLE_MODELS["t1"]:
         raise HTTPException(
             status_code=422,
@@ -335,21 +414,24 @@ def clasificar(body: TextIn):
         )
     if body.modelo == "gemini":
         return _predict_t1_gemini(body.texto)
+    if body.modelo == "qwen":
+        return _predict_t1_qwen(body.texto)
     return _predict_t1_scibeto(body.texto)
 
 
 @app.post("/contribucion", response_model=Prediction)
 def contribucion(body: TextIn):
-    """T2: detección binaria de contribución científica. Modelo: scibeto | gemini."""
+    """T2: detección binaria de contribución científica. Modelo: scibeto | gemini | qwen."""
     if body.modelo not in AVAILABLE_MODELS["t2"]:
         raise HTTPException(
             status_code=422,
             detail=f"Modelo '{body.modelo}' no disponible para T2. "
                    f"Disponibles: {AVAILABLE_MODELS['t2']}"
         )
-
     if body.modelo == "gemini":
         return _predict_t2_gemini(body.texto)
+    if body.modelo == "qwen":
+        return _predict_t2_qwen(body.texto)
     return _predict_t2_scibeto(body.texto)
 
 
@@ -408,7 +490,7 @@ def _segmentar(texto: str, min_palabras: int = 250, max_palabras: int = 1000) ->
 @app.post("/analizar", response_model=AnalisisOut)
 def analizar(body: AnalisisIn):
     """Pipeline completo: segmenta texto y aplica T1 + T2 a cada párrafo.
-    Modelo: scibeto | gemini."""
+    Modelo: scibeto | gemini | qwen."""
     if body.modelo not in AVAILABLE_MODELS["pipeline"]:
         raise HTTPException(
             status_code=422,
@@ -421,8 +503,12 @@ def analizar(body: AnalisisIn):
             status_code=422,
             detail="El texto no contiene párrafos válidos (mínimo 5 palabras cada uno)."
         )
-    _pred_t1 = _predict_t1_gemini if body.modelo == "gemini" else _predict_t1_scibeto
-    _pred_t2 = _predict_t2_gemini  if body.modelo == "gemini" else _predict_t2_scibeto
+    _pred_t1 = (_predict_t1_gemini if body.modelo == "gemini"
+                else _predict_t1_qwen if body.modelo == "qwen"
+                else _predict_t1_scibeto)
+    _pred_t2 = (_predict_t2_gemini if body.modelo == "gemini"
+                else _predict_t2_qwen if body.modelo == "qwen"
+                else _predict_t2_scibeto)
     resultados: list[FragmentoResult] = []
     for frag in fragmentos_texto:
         p1 = _pred_t1(frag)
