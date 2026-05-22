@@ -16,7 +16,7 @@ Endpoints:
     GET  /modelos       — lista modelos disponibles por tarea
 
 Requisito para modelo "qwen": OPENROUTER_API_KEY configurada en .env.
-    Modelo por defecto: qwen/qwen3-8b:free (configurable con OPENROUTER_MODEL).
+    Modelo por defecto: qwen/qwen3-8b (configurable con OPENROUTER_MODEL).
 """
 
 import os
@@ -42,7 +42,7 @@ GEMINI_MODEL   = "gemini-2.5-flash"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_MODEL   = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
+OPENROUTER_MODEL   = os.getenv("OPENROUTER_MODEL", "qwen/qwen3-8b")
 
 T2_SYSTEM_PROMPT = """Eres un clasificador experto de fragmentos de artículos científicos en español.
 
@@ -350,12 +350,14 @@ def _openrouter_chat(prompt: str, max_tokens: int = 15) -> str:
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=OPENROUTER_API_KEY,
+            max_retries=0,
         )
         resp = client.chat.completions.create(
             model=OPENROUTER_MODEL,
             messages=[{"role": "user", "content": prompt + " /no_think"}],
             max_tokens=max_tokens,
             temperature=0.0,
+            timeout=30.0,
         )
         raw = (resp.choices[0].message.content or "").strip()
     except Exception as exc:
