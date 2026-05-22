@@ -128,7 +128,7 @@ app = FastAPI(
         "T1 (/clasificar): clasifica fragmentos en 8 categorías IMRaD. "
         "T2 (/contribucion): detecta si un fragmento es una contribución científica."
     ),
-    version="2.1.0",
+    version="2.1.1",
 )
 
 CORS_ORIGINS = [o.strip() for o in os.getenv(
