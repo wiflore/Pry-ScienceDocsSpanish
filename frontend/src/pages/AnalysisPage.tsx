@@ -42,7 +42,7 @@ export default function AnalysisPage() {
       if (e instanceof ApiError) {
         setError(
           e.status === 503
-            ? "El backend reporta que Gemini no está configurado. Usa el modelo Encoder."
+            ? "El modelo seleccionado no está disponible en este momento. Prueba con el Encoder (SciBETO)."
             : `Error ${e.status}: ${e.detail.slice(0, 200)}`
         );
       } else {

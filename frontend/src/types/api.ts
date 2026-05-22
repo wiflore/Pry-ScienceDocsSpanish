@@ -13,8 +13,9 @@ export type EtiquetaT1 =
 
 export type EtiquetaT2 = "contribucion" | "no_contribucion";
 
-// Decisión del equipo: solo 2 familias en producción (Qwen es TODO)
-export type ModeloFamilia = "scibeto" | "gemini";
+// Tres modelos en producción: encoder propio (SciBETO) + LLM comercial (Gemini)
+// + LLM open-weight (Qwen3-8B vía OpenRouter).
+export type ModeloFamilia = "scibeto" | "gemini" | "qwen";
 
 // ─── /clasificar (T1) y /contribucion (T2) ──────────────────────────────────
 export interface PredictRequest {

@@ -4,6 +4,7 @@ import HomePage from "./pages/HomePage";
 import AnalysisPage from "./pages/AnalysisPage";
 import ArchitecturePage from "./pages/ArchitecturePage";
 import AboutPage from "./pages/AboutPage";
+import uniandesLogo from "./assets/uniandes-logo.png";
 
 export default function App() {
   return (
@@ -19,27 +20,34 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
-        <footer className="bg-white border-t border-gray-200 py-4 mt-8">
-          <div className="max-w-6xl mx-auto px-6 text-center text-xs text-gray-500">
-            Pry-ScienceDocsSpanish · Maestría en IA Aplicada — Universidad de
-            los Andes ·{" "}
-            <a
-              href="https://huggingface.co/wiflore/SciBETO-IMRaD"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Modelo T1 en HF
-            </a>
-            {" · "}
-            <a
-              href="https://huggingface.co/wiflore/SciBETO-T2-contribucion"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Modelo T2 en HF
-            </a>
+        <footer className="bg-white border-t border-gray-200 py-5 mt-8">
+          <div className="max-w-6xl mx-auto px-6 flex flex-col items-center gap-3">
+            <img
+              src={uniandesLogo}
+              alt="Universidad de los Andes"
+              className="h-10 w-auto"
+            />
+            <div className="text-center text-xs text-gray-500">
+              Pry-ScienceDocsSpanish · Maestría en IA Aplicada — Universidad de
+              los Andes ·{" "}
+              <a
+                href="https://huggingface.co/wiflore/SciBETO-IMRaD"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Modelo T1 en HF
+              </a>
+              {" · "}
+              <a
+                href="https://huggingface.co/wiflore/SciBETO-T2-contribucion"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Modelo T2 en HF
+              </a>
+            </div>
           </div>
         </footer>
       </div>

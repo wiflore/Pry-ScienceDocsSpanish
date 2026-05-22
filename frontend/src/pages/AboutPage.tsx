@@ -48,27 +48,8 @@ export default function AboutPage() {
         </ul>
       </section>
 
-      <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
-        <h2 className="font-semibold text-gray-900">Equipo</h2>
-        <div className="text-sm text-gray-700 space-y-1">
-          <p>
-            <strong>Desarrollador de modelos:</strong> Anderson — entrenamiento
-            de SciBETO T1 y T2, integración Gemini en la API.
-          </p>
-          <p>
-            <strong>Ingeniero de implementación + Frontend:</strong> Daniel
-            Felipe Caro — despliegue en AWS, frontend React, documentación
-            operativa.
-          </p>
-          <p className="text-xs text-gray-500 pt-2">
-            Más integrantes en el documento de proyecto entregado a la
-            universidad.
-          </p>
-        </div>
-      </section>
-
       <section className="text-center text-xs text-gray-500 pb-4">
-        Versión de la API: v2.0.0 · Última actualización: mayo 2026
+        Versión de la API: v2.1.1 · Última actualización: mayo 2026
       </section>
     </div>
   );

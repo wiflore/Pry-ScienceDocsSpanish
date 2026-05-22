@@ -80,7 +80,9 @@ export default function DocumentInput({
         {loading ? (
           <>
             <Loader2 className="h-5 w-5 animate-spin" />
-            {modelo === "gemini" ? "Analizando con Gemini (~10s)..." : "Analizando..."}
+            {modelo === "scibeto"
+              ? "Analizando..."
+              : "Analizando con LLM (puede tardar)..."}
           </>
         ) : (
           <>

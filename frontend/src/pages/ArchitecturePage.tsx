@@ -1,3 +1,5 @@
+import diagramaDespliegue from "../assets/diagrama-despliegue.png";
+
 export default function ArchitecturePage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -11,26 +13,11 @@ export default function ArchitecturePage() {
       {/* Diagrama */}
       <section className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="font-semibold text-gray-900 mb-4">Diagrama de despliegue</h2>
-        <pre className="bg-gray-50 border border-gray-200 rounded p-4 text-xs font-mono overflow-x-auto leading-relaxed">
-{`USUARIO / EVALUADOR
-        │ HTTPS
-        ▼
-React Frontend (AWS Amplify Hosting)   ← este sitio
-        │ fetch JSON
-        ▼
-FastAPI v2.0  (AWS ECS Fargate, us-east-1)
-   2 vCPU · 6 GB RAM · imagen :v2.0.0
-        │
-        ├── /clasificar    (T1)
-        ├── /contribucion  (T2)
-        ├── /analizar      (pipeline T1+T2 segmentando por \\n\\n)
-        ├── /modelos
-        └── /health
-        │
-        ├──► SciBETO-IMRaD            (Hugging Face Hub)
-        ├──► SciBETO-T2-contribucion  (Hugging Face Hub)
-        └──► Gemini 2.5 Flash         (Google AI API)`}
-        </pre>
+        <img
+          src={diagramaDespliegue}
+          alt="Diagrama de despliegue: navegador, frontend React en AWS Amplify, API FastAPI v2.0.2 en AWS ECS Fargate y modelos en Hugging Face Hub y Gemini"
+          className="w-full rounded border border-gray-200"
+        />
       </section>
 
       {/* Decisiones */}
@@ -53,7 +40,7 @@ FastAPI v2.0  (AWS ECS Fargate, us-east-1)
         />
         <DecisionCard
           title="Versionamiento sin latest"
-          desc="Cada deploy referencia la imagen ECR por tag semántico (v2.0.0) más tag de fecha (v2.0.0-20260517). Sin tag latest para garantizar reproducibilidad."
+          desc="Cada deploy referencia la imagen ECR por tag semántico (v2.0.2) más tag de fecha (v2.0.2-20260520). Sin tag latest para garantizar reproducibilidad."
         />
         <DecisionCard
           title="Secretos en Parameter Store"

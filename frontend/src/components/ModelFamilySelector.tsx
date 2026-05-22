@@ -1,5 +1,5 @@
 import type { ModeloFamilia } from "../types/api";
-import { Cpu, Cloud } from "lucide-react";
+import { Cpu, Cloud, Bot } from "lucide-react";
 
 interface Props {
   value: ModeloFamilia;
@@ -13,7 +13,7 @@ export default function ModelFamilySelector({
   geminiEnabled,
 }: Props) {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <button
         type="button"
         onClick={() => onChange("scibeto")}
@@ -59,6 +59,27 @@ export default function ModelFamilySelector({
         <div>
           <div className="font-semibold text-sm">Comercial</div>
           <div className="text-xs text-gray-500">Gemini 2.5 Flash · API</div>
+        </div>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange("qwen")}
+        title="Modelo open-weight Qwen3-8B servido vía OpenRouter"
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all text-left ${
+          value === "qwen"
+            ? "border-emerald-600 bg-emerald-50 ring-2 ring-emerald-200"
+            : "border-gray-200 bg-white hover:border-gray-300"
+        }`}
+      >
+        <Bot
+          className={`h-6 w-6 ${
+            value === "qwen" ? "text-emerald-600" : "text-gray-400"
+          }`}
+        />
+        <div>
+          <div className="font-semibold text-sm">Open-weight</div>
+          <div className="text-xs text-gray-500">Qwen3-8B · OpenRouter</div>
         </div>
       </button>
     </div>
